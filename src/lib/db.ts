@@ -11,7 +11,7 @@ if (!fs.existsSync(dataDir)) {
 
 // Create client: local file for dev, Turso cloud for production
 const client: Client = createClient({
-  url: process.env.TURSO_DATABASE_URL || `file:${path.join(dataDir, 'zhiyi.db')}`,
+  url: process.env.TURSO_DATABASE_URL || `file:${path.join(dataDir, 'daboli.db')}`,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
@@ -161,7 +161,7 @@ async function seedData() {
       const hashedPassword = bcrypt.hashSync('admin123', 10);
       await db.prepare(
         'INSERT OR IGNORE INTO users (username, email, password, role) VALUES (?, ?, ?, ?)'
-      ).run('admin', 'admin@zhiyi.com', hashedPassword, 'admin');
+      ).run('admin', 'admin@daboli.com', hashedPassword, 'admin');
     }
   } catch {}
 

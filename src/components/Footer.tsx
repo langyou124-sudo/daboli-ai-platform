@@ -34,7 +34,7 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">联系方式</h3>
             <ul className="space-y-2 text-sm">
               <li>地址：云南省昆明市</li>
-              <li>邮箱：contact@zhiyi-tech.com</li>
+              <li>邮箱：contact@daboli.com</li>
               <li>微信公众号：达博理科技</li>
             </ul>
           </div>

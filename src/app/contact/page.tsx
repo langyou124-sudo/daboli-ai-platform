@@ -95,7 +95,7 @@ export default function ContactPage() {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-xl">📧</div>
                 <div>
                   <h3 className="font-semibold">电子邮箱</h3>
-                  <p className="text-gray-600">contact@zhiyi-tech.com</p>
+                  <p className="text-gray-600">contact@daboli.com</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">

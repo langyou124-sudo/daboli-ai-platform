@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'zhiyi-secret-key-change-in-production');
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'daboli-secret-key-change-in-production');
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hashSync(password, 10);
