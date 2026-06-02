@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status') || 'published';
 
   // Try database first
+  let dbCourses: any[] = [];
   try {
     const { default: db } = await import('@/lib/db');
     let query = 'SELECT * FROM courses WHERE status = ?';
@@ -16,17 +17,18 @@ export async function GET(req: NextRequest) {
       params.push(category);
     }
     query += ' ORDER BY sort_order ASC, created_at DESC';
-    const courses = await db.prepare(query).all(...params);
-    if (courses.length > 0) {
-      return NextResponse.json({ courses });
-    }
+    dbCourses = await db.prepare(query).all(...params) as any[];
   } catch {}
 
-  // Fallback
-  let courses = Object.values(FALLBACK_COURSES).filter(c => c.status === status);
+  // Merge: include fallback courses not already in DB results
+  const dbIds = new Set(dbCourses.map((c: any) => c.id));
+  let fallbackCourses = Object.values(FALLBACK_COURSES)
+    .filter(c => c.status === status && !dbIds.has(c.id));
   if (category) {
-    courses = courses.filter(c => c.category === category);
+    fallbackCourses = fallbackCourses.filter(c => c.category === category);
   }
+
+  const courses = [...dbCourses, ...fallbackCourses];
   return NextResponse.json({ courses });
 }
 
