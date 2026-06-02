@@ -26,16 +26,28 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const url = activeCategory ? `/api/courses?category=${activeCategory}` : '/api/courses';
     fetch(url).then(r => r.json()).then(d => setCourses(d.courses || []));
   }, [activeCategory]);
 
-  const [user, setUser] = useState<any>(null);
-
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => { if (d) setUser(d.user); });
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => {
+      if (d) {
+        setUser(d.user);
+        fetch('/api/orders').then(r => r.json()).then(oData => {
+          const ids = new Set<number>(
+            (oData.orders || [])
+              .filter((o: any) => o.status === 'paid')
+              .map((o: any) => o.course_id)
+          );
+          setPurchasedIds(ids);
+        });
+      }
+    });
   }, []);
 
   const handleBuy = async (courseId: number) => {
@@ -43,7 +55,7 @@ export default function CoursesPage() {
     const res = await fetch(`/api/courses/${courseId}/purchase`, { method: 'POST' });
     const data = await res.json();
     if (res.ok) {
-      window.location.href = `/courses/${courseId}/learn`;
+      setPurchasedIds(prev => new Set(prev).add(courseId));
     } else if (res.status === 402) {
       alert(`余额不足！当前余额 ¥${data.balance}，课程价格 ¥${data.price}。请先充值。`);
       window.location.href = '/user';
@@ -104,9 +116,15 @@ export default function CoursesPage() {
                   <Link href={`/courses/${course.id}`} className="flex-1 border border-blue-600 text-blue-600 py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors text-center">
                     了解详情
                   </Link>
-                  <button onClick={() => handleBuy(course.id)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
-                    立即购买
-                  </button>
+                  {purchasedIds.has(course.id) || course.price === 0 ? (
+                    <Link href={`/courses/${course.id}/learn`} className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition-colors text-center">
+                      开始学习
+                    </Link>
+                  ) : (
+                    <button onClick={() => handleBuy(course.id)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                      立即购买
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

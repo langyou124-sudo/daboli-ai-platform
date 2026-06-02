@@ -59,7 +59,6 @@ export default function CourseOverviewPage() {
     if (res.ok) {
       setHasPaid(true);
       setShowPaywall(false);
-      router.push(`/courses/${courseId}/learn`);
     } else if (res.status === 402) {
       alert(`余额不足！当前余额 ¥${data.balance}，课程价格 ¥${data.price}。请先充值。`);
       router.push('/user');
