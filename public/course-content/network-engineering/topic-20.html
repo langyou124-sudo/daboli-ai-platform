@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHCP协议</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>DHCP协议</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>DHCP</dt><dd>动态主机配置协议，自动为网络设备分配IP地址和网络配置</dd><dt>IP地址租约</dt><dd>DHCP服务器分配IP地址给客户端的临时使用权，有时间限制</dd><dt>DORA</dt><dd>DHCP四步交互过程：Discover、Offer、Request、Acknowledge</dd><dt>DHCP中继代理</dt><dd>在不同子网之间转发DHCP请求的网络设备</dd><dt>Discover</dt><dd>DHCP客户端广播发送的发现报文，寻找DHCP服务器</dd><dt>Offer</dt><dd>DHCP服务器回复的提供报文，包含可用的IP地址</dd><dt>Request</dt><dd>DHCP客户端发送的请求报文，确认使用服务器提供的IP地址</dd><dt>Acknowledge</dt><dd>DHCP服务器发送的确认报文，完成IP地址分配</dd></dl></div><h2>引入：自动配置网络参数</h2>
+<p>想象一下你管理一个有500台电脑的公司网络。如果每台电脑都需要手动配置IP地址、子网掩码、默认网关和DNS服务器地址，工作量会非常大。而且手动配置容易出错——两个电脑配了相同的IP地址就会冲突，导致都无法上网。</p>
+<p>DHCP（Dynamic Host Configuration Protocol，动态主机配置协议）就是解决这个问题的协议。它能够自动为网络中的设备分配IP地址和其他网络配置参数，大大简化了网络管理。</p>
+<p>当你连接到Wi-Fi或插入网线时，电脑会自动获取IP地址并能够上网——这就是DHCP在幕后工作。</p>
+<h2>DHCP的工作过程</h2>
+<p>DHCP使用客户端-服务器模型。客户端是需要获取IP地址的设备（如电脑、手机），服务器是负责分配IP地址的设备（可以是专用的DHCP服务器，也可以是路由器）。</p>
+<p>DHCP的工作过程被称为DORA过程，由四个步骤组成：</p>
+<p>第一步：Discover（发现）。客户端启动后，由于还没有IP地址，它使用0.0.0.0作为源地址，255.255.255.255作为目的地址，广播发送Discover报文。这个报文的意思是&quot;有没有DHCP服务器？我需要一个IP地址&quot;。</p>
+<p>第二步：Offer（提供）。网络中的DHCP服务器收到Discover报文后，从地址池中选择一个可用的IP地址，广播发送Offer报文。这个报文的意思是&quot;我可以给你这个IP地址&quot;。如果有多个DHCP服务器，客户端可能会收到多个Offer。</p>
+<p>第三步：Request（请求）。客户端选择一个Offer（通常是第一个收到的），广播发送Request报文，告诉所有DHCP服务器它选择了哪个Offer。广播的目的是通知其他DHCP服务器&quot;我已经选了，你们可以把之前Offer的地址收回了&quot;。</p>
+<p>第四步：Acknowledge（确认）。被选中的DHCP服务器发送Acknowledge报文，确认IP地址的分配。客户端收到ACK后，就可以使用这个IP地址了。</p>
+<p>这四步完成后，客户端获得了IP地址、子网掩码、默认网关、DNS服务器等完整的网络配置参数。</p>
+<h2>IP地址租约</h2>
+<p>DHCP分配的IP地址不是永久的，而是有时间限制的——这就是IP地址租约（Lease）。租约时间由DHCP服务器配置，通常从几小时到几天不等。</p>
+<p>租约机制的工作流程：</p>
+<ol>
+<li>客户端获得IP地址时，同时获得租约时间</li>
+<li>租约时间过半时，客户端尝试续租——向服务器发送Request报文</li>
+<li>如果服务器同意，返回ACK，租约重新计时</li>
+<li>如果服务器不同意或没有响应，客户端继续使用该地址</li>
+<li>租约时间达到87.5%时，客户端再次尝试续租</li>
+<li>如果续租失败，租约到期后客户端必须释放IP地址，重新开始DORA过程</li>
+</ol>
+<p>续租过程是单播的（直接发给DHCP服务器），而不是广播的，减少了网络流量。</p>
+<h2>DHCP中继代理</h2>
+<p>在大型网络中，通常会划分多个子网。但DHCP Discover是广播报文，广播不能跨越路由器——也就是说，不同子网的客户端无法直接与DHCP服务器通信。</p>
+<p>解决方案是使用DHCP中继代理（DHCP Relay Agent）。中继代理通常是路由器上的一个功能，它的工作是：</p>
+<ol>
+<li>在本地子网监听DHCP Discover报文</li>
+<li>将Discover报文以单播方式转发给指定的DHCP服务器</li>
+<li>将DHCP服务器的响应转发回客户端</li>
+</ol>
+<p>使用中继代理后，一个DHCP服务器可以为多个子网的客户端分配IP地址。服务器根据中继代理的IP地址来判断客户端在哪个子网，从而分配正确的IP地址范围。</p>
+<h2>DHCP的其他功能</h2>
+<p>除了分配IP地址，DHCP还可以提供以下配置信息：</p>
+<ul>
+<li>子网掩码：告诉客户端网络的大小</li>
+<li>默认网关：告诉客户端如何访问其他网络</li>
+<li>DNS服务器地址：告诉客户端使用哪个DNS服务器</li>
+<li>NTP服务器地址：告诉客户端使用哪个时间服务器</li>
+<li>TFTP服务器地址：用于无盘工作站或网络设备的配置文件下载</li>
+</ul>
+<h2>DHCP安全问题</h2>
+<p>DHCP存在一些安全隐患：</p>
+<p>DHCP耗尽攻击：攻击者伪造大量MAC地址，向DHCP服务器请求IP地址，耗尽地址池，导致正常用户无法获取IP地址。解决方案是限制每个端口的MAC地址数量。</p>
+<p>伪造DHCP服务器：攻击者在局域网中搭建非法的DHCP服务器，向客户端提供错误的网络配置（如将网关指向攻击者的电脑）。解决方案是启用DHCP Snooping功能，只允许受信任的端口提供DHCP响应。</p>
+<h2>总结</h2>
+<p>DHCP是网络管理中不可或缺的协议，它通过DORA四步过程自动为客户端分配IP地址和网络配置。IP地址租约机制保证了地址的有效回收和再利用。DHCP中继代理使得一个服务器可以为多个子网提供服务。</p>
+<p>理解DHCP的工作原理对于网络工程师来说非常重要，因为IP地址配置问题是网络故障中最常见的原因之一。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. DHCP的四步交互过程的正确顺序是什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> Discover → Offer → Acknowledge → Request</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> Discover → Request → Offer → Acknowledge</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> Discover → Offer → Request → Acknowledge</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> Request → Discover → Offer → Acknowledge</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>DHCP的四步过程（DORA）：客户端发送Discover，服务器回复Offer，客户端发送Request确认，服务器发送Acknowledge完成分配。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="租约"><p class="quiz-question">2. DHCP分配的IP地址有时间限制，这个限制称为_____。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>租约</p><p><strong>解析：</strong>IP地址租约（Lease）是DHCP服务器分配给客户端的IP地址临时使用权，有时间限制，到期后需要续租或重新获取。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">3. DHCP Discover报文使用什么目的地址？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> DHCP服务器的IP地址</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> 255.255.255.255</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> 0.0.0.0</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> 默认网关地址</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>DHCP Discover是广播报文，使用255.255.255.255作为目的地址，因为客户端此时还不知道DHCP服务器的IP地址。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="因为DHCP Discover是广播报文，不能跨越路由器。中继代理将广播转为单播转发给DHCP服务器，使得一个DHCP服务器可以为多个子网的客户端分配IP地址。"><p class="quiz-question">4. 为什么需要DHCP中继代理？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>因为DHCP Discover是广播报文，不能跨越路由器。中继代理将广播转为单播转发给DHCP服务器，使得一个DHCP服务器可以为多个子网的客户端分配IP地址。</p><p><strong>解析：</strong>中继代理通常配置在路由器上，它监听本地子网的DHCP广播，以单播方式转发给指定的DHCP服务器，再将响应转发回客户端。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">5. DHCP租约时间过半时，客户端会做什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> 释放IP地址</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> 尝试续租</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> 重新发送Discover</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> 什么都不做</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>租约时间过半时，客户端会向DHCP服务器发送Request报文尝试续租。如果续租成功，租约重新计时。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第9章</li><li>RFC 2131 - DHCP</li></ul></div>
+</body>
+</html>

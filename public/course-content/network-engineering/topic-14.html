@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP协议与三次握手</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>TCP协议与三次握手</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>TCP</dt><dd>传输控制协议，提供可靠的、面向连接的字节流传输服务</dd><dt>三次握手</dt><dd>TCP建立连接的过程，客户端和服务器通过SYN、SYN+ACK、ACK三个报文确认连接</dd><dt>四次挥手</dt><dd>TCP断开连接的过程，双方各发送一个FIN报文，共需四个报文完成关闭</dd><dt>序列号</dt><dd>TCP报文中标识数据字节流位置的32位字段，用于保证数据按序到达</dd><dt>确认号</dt><dd>TCP报文中期望收到的下一个字节的序列号，用于确认已收到的数据</dd><dt>SYN</dt><dd>同步标志位，用于发起TCP连接请求</dd><dt>FIN</dt><dd>结束标志位，用于请求关闭TCP连接</dd><dt>滑动窗口</dt><dd>TCP流量控制机制，通过窗口大小控制发送方的发送速率</dd></dl></div><h2>引入：为什么需要TCP？</h2>
+<p>在网络层，IP协议提供了&quot;尽力而为&quot;的数据包传输服务——它会尽最大努力把数据包送到目的地，但不保证一定能送到，也不保证按顺序到达。这就好比你寄了一组编号的信件，邮局可能会把它们弄丢，也可能不按顺序送达。</p>
+<p>对于网页浏览、文件传输、电子邮件这类应用来说，数据丢失或乱序是不可接受的。想象一下，你下载一个文件，如果中间丢了几个数据包，文件就会损坏；如果数据包乱序到达，文件内容就会错乱。</p>
+<p>TCP（Transmission Control Protocol，传输控制协议）就是在IP之上提供可靠传输服务的协议。它是互联网中最重要的传输层协议之一，为上层应用提供可靠的、面向连接的、基于字节流的传输服务。</p>
+<h2>TCP报文段格式</h2>
+<p>TCP传输的基本单位是报文段（Segment）。每个TCP报文段由首部和数据两部分组成。首部固定长度为20字节，最长可达60字节（包含选项字段）。</p>
+<p>TCP首部的各个字段如下：</p>
+<ul>
+<li>源端口号（16位）：发送方的端口号</li>
+<li>目的端口号（16位）：接收方的端口号</li>
+<li>序列号（32位）：本报文段所发送数据的第一个字节的序号</li>
+<li>确认号（32位）：期望收到对方下一个报文段的第一个字节的序号</li>
+<li>数据偏移（4位）：首部长度，以4字节为单位</li>
+<li>保留位（6位）：保留为将来使用</li>
+<li>标志位（6位）：URG、ACK、PSH、RST、SYN、FIN</li>
+<li>窗口大小（16位）：接收窗口大小，用于流量控制</li>
+<li>校验和（16位）：用于检测报文段在传输中是否出错</li>
+<li>紧急指针（16位）：当URG标志置1时有效</li>
+<li>选项（可变长度）：如MSS（最大报文段长度）、窗口缩放因子等</li>
+</ul>
+<p>其中最重要的字段是序列号、确认号和标志位，它们共同支撑了TCP的可靠传输机制。</p>
+<h2>序列号与确认号</h2>
+<p>TCP对每个传输的字节都进行编号，这就是序列号（Sequence Number）。序列号机制是TCP可靠传输的基础。</p>
+<ul>
+<li>序列号：本报文段所发送数据的第一个字节的编号。例如，如果一个报文段的序列号是1000，数据长度是100字节，那么这个报文段包含第1000到1099字节的数据。</li>
+<li>确认号：期望收到对方下一个报文段的序列号。例如，如果接收方收到序列号1000、长度100的报文段，它会发送确认号1100，表示&quot;我已收到1099及之前的所有数据，请从1100开始发&quot;。</li>
+</ul>
+<p>这种机制称为累积确认——确认号N表示序列号N之前的所有数据都已正确收到。</p>
+<h2>三次握手：建立连接</h2>
+<p>TCP是面向连接的协议，通信双方在传输数据之前必须先建立连接。建立连接的过程称为三次握手（Three-way Handshake）。</p>
+<p>第一次握手：客户端发送一个SYN报文段（SYN标志位置1），序列号设为一个随机值x，进入SYN_SENT状态。这表示&quot;我想建立连接，我的初始序列号是x&quot;。</p>
+<p>第二次握手：服务器收到SYN报文段后，发送SYN+ACK报文段（SYN和ACK标志位都置1），序列号设为随机值y，确认号设为x+1，进入SYN_RCVD状态。这表示&quot;同意建立连接，我的初始序列号是y，已收到你的x&quot;。</p>
+<p>第三次握手：客户端收到SYN+ACK后，发送ACK报文段（ACK标志位置1），序列号设为x+1，确认号设为y+1，双方进入ESTABLISHED状态。这表示&quot;确认收到，连接建立&quot;。</p>
+<p>为什么是三次握手而不是两次？这是因为TCP需要双方都确认对方的发送和接收能力。如果只有两次握手，服务器无法确认客户端收到了自己的SYN+ACK，可能会建立无效连接。三次握手还能防止历史重复连接的初始化——如果一个旧的SYN报文段延迟到达，服务器会回复SYN+ACK，但客户端发现确认号不对，会发送RST拒绝这个连接。</p>
+<h2>四次挥手：关闭连接</h2>
+<p>数据传输完成后，TCP需要通过四次挥手（Four-way Handshake）来关闭连接。关闭连接是双方各自独立进行的，因此需要四个报文。</p>
+<p>第一次挥手：主动关闭方发送FIN报文段（FIN标志位置1），序列号设为u，进入FIN_WAIT_1状态。这表示&quot;我没有数据要发了&quot;。</p>
+<p>第二次挥手：被动关闭方收到FIN后，发送ACK报文段，确认号设为u+1，进入CLOSE_WAIT状态。主动关闭方收到ACK后进入FIN_WAIT_2状态。这表示&quot;收到你的关闭请求&quot;。</p>
+<p>此时连接处于半关闭状态——主动关闭方不再发送数据，但仍可以接收被动关闭方发来的数据。</p>
+<p>第三次挥手：被动关闭方发送完剩余数据后，发送FIN报文段，序列号设为w，进入LAST_ACK状态。这表示&quot;我也没有数据要发了&quot;。</p>
+<p>第四次挥手：主动关闭方收到FIN后，发送ACK报文段，确认号设为w+1，进入TIME_WAIT状态。等待2MSL（最大报文段生存时间）后进入CLOSED状态。这表示&quot;确认收到你的关闭请求&quot;。</p>
+<p>为什么要等待2MSL？一是为了确保最后的ACK能到达被动关闭方（如果丢失，被动关闭方会重发FIN）；二是为了确保本次连接的所有报文段都从网络中消失，避免影响新连接。</p>
+<h2>TCP状态机</h2>
+<p>TCP连接的生命周期可以用状态机来描述。主要状态包括：</p>
+<ul>
+<li>LISTEN：服务器等待客户端的连接请求</li>
+<li>SYN_SENT：客户端已发送SYN，等待服务器回复</li>
+<li>SYN_RCVD：服务器已收到SYN并回复SYN+ACK，等待客户端确认</li>
+<li>ESTABLISHED：连接已建立，双方可以传输数据</li>
+<li>FIN_WAIT_1：主动关闭方已发送FIN，等待ACK</li>
+<li>FIN_WAIT_2：主动关闭方已收到ACK，等待被动关闭方的FIN</li>
+<li>CLOSE_WAIT：被动关闭方已收到主动关闭方的FIN</li>
+<li>LAST_ACK：被动关闭方已发送FIN，等待最后的ACK</li>
+<li>TIME_WAIT：主动关闭方已发送最后的ACK，等待2MSL</li>
+<li>CLOSED：连接已关闭</li>
+</ul>
+<p>理解TCP状态机对于网络故障排查非常重要。例如，如果服务器上出现大量CLOSE_WAIT状态的连接，说明应用程序没有正确关闭连接；如果出现大量TIME_WAIT状态，可能是服务器频繁创建和关闭短连接。</p>
+<h2>TCP的可靠传输机制</h2>
+<p>TCP通过多种机制保证数据的可靠传输：</p>
+<ol>
+<li><p>校验和：每个TCP报文段都包含校验和字段，接收方通过校验和验证数据在传输过程中是否出错。</p>
+</li>
+<li><p>序列号与确认号：通过序列号对数据字节进行编号，接收方通过确认号告知发送方已收到的数据范围。</p>
+</li>
+<li><p>超时重传：发送方在发送报文段后启动一个定时器，如果在超时时间内没有收到确认，就重传该报文段。超时时间（RTO）根据RTT（往返时间）动态计算。</p>
+</li>
+<li><p>重复确认：如果接收方收到乱序的报文段，会重复发送对最后一个按序到达的报文段的确认。发送方收到3个重复确认后，会立即重传可能丢失的报文段（快重传）。</p>
+</li>
+</ol>
+<h2>总结</h2>
+<p>TCP是互联网中最重要的传输层协议，它通过三次握手建立连接，通过序列号、确认号、超时重传等机制保证可靠传输，通过四次挥手安全关闭连接。理解TCP的工作原理对于网络编程和故障排查至关重要。</p>
+<p>在下一个课题中，我们将深入学习TCP的流量控制和拥塞控制机制——它们是如何在保证可靠性的同时，还能高效利用网络带宽的。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="B"><p class="quiz-question">1. TCP建立连接需要几次握手？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 两次</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 三次</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 四次</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 五次</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>TCP通过三次握手建立连接：客户端发送SYN，服务器回复SYN+ACK，客户端发送ACK。三次握手确保双方都确认了对方的发送和接收能力。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. TCP报文段中，哪个字段用于期望收到对方下一个字节的序号？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 序列号</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 确认号</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 窗口大小</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 校验和</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>确认号（Acknowledgment Number）表示期望收到对方下一个报文段的第一个字节的序号，用于确认已收到的数据。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="四"><p class="quiz-question">3. TCP关闭连接需要_____次挥手。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>四</p><p><strong>解析：</strong>TCP关闭连接需要四次挥手：主动方发FIN，被动方发ACK，被动方发FIN，主动方发ACK。因为TCP是全双工的，双方需要各自独立关闭。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="三次握手确保双方都确认了对方的发送和接收能力。如果只有两次，服务器无法确认客户端收到了SYN+ACK，可能建立无效连接。三次握手还能防止历史重复连接的初始化。"><p class="quiz-question">4. 为什么TCP建立连接需要三次握手而不是两次？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>三次握手确保双方都确认了对方的发送和接收能力。如果只有两次，服务器无法确认客户端收到了SYN+ACK，可能建立无效连接。三次握手还能防止历史重复连接的初始化。</p><p><strong>解析：</strong>两次握手的问题在于服务器不知道客户端是否收到了自己的SYN+ACK。三次握手让客户端用第三个报文（ACK）确认收到了服务器的SYN，双方都能确认连接有效。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="D"><p class="quiz-question">5. TCP连接关闭后，主动关闭方进入TIME_WAIT状态需要等待多长时间？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> 1个RTT</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> 2个RTT</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> 1个MSL</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> 2个MSL</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>TIME_WAIT状态需要等待2MSL（最大报文段生存时间）。这是为了确保最后的ACK能到达被动关闭方，以及确保本次连接的所有报文段都从网络中消失。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第6章</li><li>RFC 793 - Transmission Control Protocol</li></ul></div>
+</body>
+</html>

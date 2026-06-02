@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>端口号与套接字</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>端口号与套接字</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>端口号</dt><dd>16位标识符，用于区分同一主机上不同的网络应用进程</dd><dt>知名端口</dt><dd>0-1023范围的端口号，分配给标准服务如HTTP(80)、HTTPS(443)、SSH(22)</dd><dt>注册端口</dt><dd>1024-49151范围的端口号，供用户注册的应用程序使用</dd><dt>动态端口</dt><dd>49152-65535范围的端口号，由操作系统临时分配给客户端使用</dd><dt>套接字</dt><dd>IP地址和端口号的组合，唯一标识网络中的一个通信端点</dd><dt>客户端</dt><dd>发起连接请求的一方，通常使用动态端口</dd><dt>服务器</dt><dd>等待并接受连接的一方，通常监听知名端口或注册端口</dd><dt>三次握手</dt><dd>TCP建立连接的过程，在套接字层面完成连接的建立</dd></dl></div><h2>引入：如何区分不同的网络应用？</h2>
+<p>当你在电脑上同时打开浏览器、微信和邮件客户端时，这三个应用都在通过网络收发数据。操作系统是如何区分这些数据应该交给哪个应用处理的呢？</p>
+<p>IP地址只能标识网络中的一台主机，但一台主机上可能同时运行着多个网络应用。端口号就是用来区分同一主机上不同网络应用进程的标识符。IP地址加上端口号，就构成了一个完整的通信端点——套接字（Socket）。</p>
+<h2>端口号的概念</h2>
+<p>端口号是一个16位的整数，范围从0到65535。在TCP或UDP报文的首部，源端口号和目的端口号各占16位。</p>
+<p>端口号的作用类似于大楼里的房间号。IP地址是大楼的地址，端口号是房间号。要给大楼里的某个人寄信，你需要知道大楼地址（IP地址）和房间号（端口号）。</p>
+<p>端口号只在本地有意义——客户端的端口号和服务器的端口号是独立的。一个TCP连接由四个要素唯一标识：源IP、源端口、目的IP、目的端口，这称为四元组（4-tuple）。</p>
+<h2>端口号的分类</h2>
+<p>IANA（互联网号码分配机构）将端口号分为三类：</p>
+<p>知名端口（Well-Known Ports）：0-1023。这些端口号分配给最常用的标准服务，需要管理员权限才能绑定。常见的知名端口包括：</p>
+<ul>
+<li>20/21：FTP（文件传输协议，20用于数据传输，21用于控制命令）</li>
+<li>22：SSH（安全外壳协议）</li>
+<li>23：Telnet（远程登录）</li>
+<li>25：SMTP（简单邮件传输协议）</li>
+<li>53：DNS（域名系统）</li>
+<li>67/68：DHCP（动态主机配置协议）</li>
+<li>80：HTTP（超文本传输协议）</li>
+<li>110：POP3（邮局协议第3版）</li>
+<li>143：IMAP（互联网消息访问协议）</li>
+<li>443：HTTPS（安全超文本传输协议）</li>
+</ul>
+<p>注册端口（Registered Ports）：1024-49151。这些端口号供用户注册的应用程序使用，不需要管理员权限。常见的注册端口包括：</p>
+<ul>
+<li>3306：MySQL数据库</li>
+<li>5432：PostgreSQL数据库</li>
+<li>6379：Redis缓存</li>
+<li>8080：HTTP代理</li>
+<li>8443：HTTPS代理</li>
+<li>27017：MongoDB数据库</li>
+</ul>
+<p>动态端口（Dynamic Ports）：49152-65535。这些端口号由操作系统临时分配给客户端使用，也称为临时端口（Ephemeral Ports）。当客户端发起连接时，操作系统会从这个范围内随机选择一个未使用的端口号。</p>
+<h2>常见端口号速查</h2>
+<p>作为网络工程师，以下端口号需要牢记：</p>
+<p>HTTP: 80 — 最基础的网页传输协议
+HTTPS: 443 — 加密的网页传输协议
+SSH: 22 — 安全远程登录
+FTP: 20/21 — 文件传输
+DNS: 53 — 域名解析
+SMTP: 25 — 发送邮件
+POP3: 110 — 接收邮件
+IMAP: 143 — 接收邮件（功能更丰富）
+Telnet: 23 — 远程登录（不安全，已逐渐被SSH替代）
+MySQL: 3306 — 最流行的开源数据库
+Redis: 6379 — 内存缓存数据库</p>
+<h2>套接字（Socket）的概念</h2>
+<p>套接字（Socket）是IP地址和端口号的组合，唯一标识网络中的一个通信端点。一个TCP连接由两个套接字组成：客户端套接字和服务器套接字。</p>
+<p>套接字的表示方式：</p>
+<ul>
+<li>IPv4：IP地址:端口号，例如 192.168.1.100:80</li>
+<li>IPv6：[IP地址]:端口号，例如 [::1]:80</li>
+</ul>
+<p>套接字是网络编程的核心概念。在操作系统层面，套接字是一种特殊的文件描述符，应用程序通过套接字API（socket、bind、listen、accept、connect、send、recv等）进行网络通信。</p>
+<h2>客户端-服务器模型</h2>
+<p>互联网中最常见的通信模型是客户端-服务器模型（Client-Server Model）。</p>
+<p>服务器是提供服务的一方，它在一个固定的端口上监听（listen），等待客户端的连接请求。服务器通常是长期运行的进程，可以同时处理多个客户端的连接。</p>
+<p>客户端是请求服务的一方，它主动发起连接。客户端通常使用操作系统分配的临时端口，连接建立后通过这个端口与服务器通信。</p>
+<p>以访问一个网站为例：</p>
+<ol>
+<li>Web服务器在80端口监听，等待连接</li>
+<li>浏览器（客户端）从操作系统获得一个临时端口（如52000）</li>
+<li>浏览器向服务器的80端口发起TCP三次握手</li>
+<li>连接建立后，浏览器发送HTTP请求，服务器返回网页内容</li>
+<li>数据传输完成后，通过四次挥手关闭连接</li>
+</ol>
+<h2>并发服务器</h2>
+<p>一个服务器如何同时处理多个客户端的连接？最常见的方式是多进程或多线程：</p>
+<ol>
+<li>服务器主线程在监听端口上等待连接</li>
+<li>当有新的连接请求到达时，主线程accept这个连接</li>
+<li>主线程创建一个新的子进程（或线程）来处理这个连接</li>
+<li>子进程通过新的套接字与客户端通信</li>
+<li>主线程继续等待下一个连接请求</li>
+</ol>
+<p>这种方式下，服务器的监听端口始终不变，但每个客户端连接都会创建一个新的套接字（使用不同的临时端口）。例如，服务器在80端口监听，同时与三个客户端建立连接，可能会产生三个新的套接字：(服务器IP:50001, 客户端A:52000)、(服务器IP:50002, 客户端B:52001)、(服务器IP:50003, 客户端C:52002)。</p>
+<h2>端口冲突与排查</h2>
+<p>在实际运维中，端口冲突是常见的问题。如果两个应用程序尝试绑定同一个端口，后绑定的那个会失败，报错&quot;Address already in use&quot;。</p>
+<p>排查端口问题的常用命令：</p>
+<ul>
+<li>netstat -tuln：查看所有正在监听的TCP和UDP端口</li>
+<li>netstat -tunap：查看所有TCP连接及其对应的进程</li>
+<li>ss -tuln：netstat的现代替代，速度更快</li>
+<li>lsof -i :80：查看占用80端口的进程</li>
+</ul>
+<h2>总结</h2>
+<p>端口号是传输层的核心概念，它与IP地址共同构成套接字，唯一标识网络中的通信端点。端口号分为知名端口（0-1023）、注册端口（1024-49151）和动态端口（49152-65535）三类。客户端-服务器模型是互联网最基本的通信模型，服务器监听固定端口，客户端使用临时端口发起连接。</p>
+<p>掌握了端口号和套接字的概念，你就理解了网络通信的完整寻址机制：IP地址找到主机，端口号找到应用，套接字标识连接端点。这是网络工程师必须牢固掌握的基础知识。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. HTTP服务使用的默认端口号是多少？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 21</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 25</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 80</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 443</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>HTTP默认使用80端口。21是FTP，25是SMTP，443是HTTPS。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="D"><p class="quiz-question">2. 端口号的范围是多少？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 0-255</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 0-1023</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 0-32767</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 0-65535</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>端口号是16位整数，范围从0到65535。其中0-1023是知名端口，1024-49151是注册端口，49152-65535是动态端口。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="套接字"><p class="quiz-question">3. IP地址和端口号的组合称为_____。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>套接字</p><p><strong>解析：</strong>套接字（Socket）是IP地址和端口号的组合，唯一标识网络中的一个通信端点。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="知名端口（0-1023）分配给标准服务，需要管理员权限；注册端口（1024-49151）供用户注册的应用使用，不需要管理员权限；动态端口（49152-65535）由操作系统临时分配给客户端使用。"><p class="quiz-question">4. 简述知名端口、注册端口和动态端口的区别。</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>知名端口（0-1023）分配给标准服务，需要管理员权限；注册端口（1024-49151）供用户注册的应用使用，不需要管理员权限；动态端口（49152-65535）由操作系统临时分配给客户端使用。</p><p><strong>解析：</strong>这种分类机制既保证了标准服务的统一性，又给用户应用留出了足够的空间，还允许客户端灵活地获取临时端口。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">5. 一个TCP连接由几个要素唯一标识？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> 2个（源IP和目的IP）</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> 3个（源IP、目的IP和端口号）</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> 4个（源IP、源端口、目的IP、目的端口）</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> 5个（加上协议类型）</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>一个TCP连接由四元组唯一标识：源IP地址、源端口号、目的IP地址、目的端口号。这四个要素完全确定了一个TCP连接。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第7章</li><li>RFC 6335 - IANA Port Assignment Guidelines</li></ul></div>
+</body>
+</html>

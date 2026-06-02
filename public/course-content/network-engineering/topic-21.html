@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTP/TFTP文件传输</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>FTP/TFTP文件传输</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>FTP</dt><dd>文件传输协议，用于在网络上传输文件的标准协议</dd><dt>主动模式</dt><dd>FTP服务器主动向客户端发起数据连接的模式</dd><dt>被动模式</dt><dd>FTP客户端主动向服务器发起数据连接的模式，更适合防火墙环境</dd><dt>TFTP</dt><dd>简单文件传输协议，基于UDP的轻量级文件传输协议</dd><dt>控制连接</dt><dd>FTP中用于传输命令和响应的连接，使用21端口</dd><dt>数据连接</dt><dd>FTP中用于传输文件数据的连接，使用20端口或随机端口</dd><dt>匿名FTP</dt><dd>允许用户使用anonymous用户名无需密码即可访问的FTP服务</dd><dt>ASCII模式</dt><dd>FTP传输模式之一，适用于文本文件，会自动转换换行符</dd></dl></div><h2>引入：文件传输的需求</h2>
+<p>在网络中传输文件是最基本的需求之一。虽然现在有很多方式可以传输文件（如HTTP下载、云存储、即时通讯等），但FTP（File Transfer Protocol，文件传输协议）仍然是最经典、最标准的文件传输协议。</p>
+<p>FTP的历史比HTTP还要悠久——它最早在1971年就被提出了（RFC 114），经过多次修订，现在的版本是RFC 959。FTP的设计目标是提供一个标准的、可靠的方式来在网络上传输文件。</p>
+<h2>FTP的工作原理</h2>
+<p>FTP与其他应用层协议有一个显著的不同：它使用两个TCP连接。</p>
+<p>控制连接：用于传输命令和响应，使用21端口。控制连接在整个会话期间保持打开状态。客户端通过控制连接发送命令（如LIST、RETR、STOR），服务器返回响应（如状态码和消息）。</p>
+<p>数据连接：用于传输文件数据，使用20端口（主动模式）或随机端口（被动模式）。每次传输文件或目录列表时都会建立一个新的数据连接，传输完成后关闭。</p>
+<p>这种分离设计使得FTP可以在传输文件的同时接收命令。例如，你可以在文件传输过程中发送ABORT命令取消传输。</p>
+<h2>FTP的命令和响应</h2>
+<p>FTP使用文本命令进行通信。常见的命令包括：</p>
+<ul>
+<li>USER username：指定用户名</li>
+<li>PASS password：指定密码</li>
+<li>LIST：列出当前目录的文件</li>
+<li>RETR filename：下载文件</li>
+<li>STOR filename：上传文件</li>
+<li>CWD directory：切换目录</li>
+<li>PWD：显示当前目录</li>
+<li>MKD directory：创建目录</li>
+<li>DELE filename：删除文件</li>
+<li>QUIT：退出登录</li>
+</ul>
+<p>服务器的响应是一个三位数字码加上文本消息：</p>
+<ul>
+<li>1xx：肯定预备响应（操作已开始，需要另一个命令来完成）</li>
+<li>2xx：肯定完成响应（操作成功完成）</li>
+<li>3xx：肯定中间响应（命令已接受，需要进一步信息）</li>
+<li>4xx：暂时否定响应（暂时性错误，可以重试）</li>
+<li>5xx：永久否定响应（永久性错误，不应重试）</li>
+</ul>
+<h2>FTP主动模式</h2>
+<p>FTP有两种数据连接的建立方式：主动模式和被动模式。</p>
+<p>主动模式（Active Mode，PORT）的工作过程：</p>
+<ol>
+<li>客户端从一个随机端口（如1025）向服务器的21端口建立控制连接</li>
+<li>客户端发送PORT命令，告诉服务器自己的IP地址和一个随机端口（如1026）</li>
+<li>服务器从20端口主动向客户端的指定端口（1026）发起数据连接</li>
+<li>数据传输开始</li>
+</ol>
+<p>主动模式的问题：服务器主动向客户端发起连接，如果客户端有防火墙，这个入站连接可能会被阻止。这就是为什么主动模式在现代网络中经常无法工作的原因。</p>
+<h2>FTP被动模式</h2>
+<p>被动模式（Passive Mode，PASV）解决了主动模式的防火墙问题：</p>
+<ol>
+<li>客户端从一个随机端口向服务器的21端口建立控制连接</li>
+<li>客户端发送PASV命令，请求服务器开放一个端口</li>
+<li>服务器回复一个随机端口号（如2024）</li>
+<li>客户端从另一个随机端口向服务器的2024端口发起数据连接</li>
+<li>数据传输开始</li>
+</ol>
+<p>在被动模式下，所有连接都是由客户端发起的，这样就不会被客户端的防火墙阻止。现代FTP客户端默认使用被动模式。</p>
+<h2>匿名FTP</h2>
+<p>匿名FTP（Anonymous FTP）允许用户使用anonymous作为用户名，通常不需要密码（或使用邮箱地址作为密码）来访问FTP服务器上的公开文件。匿名FTP常用于分发开源软件、文档、RFC文档等公共资料。</p>
+<h2>TFTP：简单文件传输协议</h2>
+<p>TFTP（Trivial File Transfer Protocol，简单文件传输协议）是一个极其简单的文件传输协议，基于UDP（端口69）。</p>
+<p>TFTP的特点：</p>
+<ul>
+<li>基于UDP：使用UDP而不是TCP，开销更小</li>
+<li>极其简单：只支持读取和写入操作，没有目录浏览、用户认证等功能</li>
+<li>无认证：不需要用户名和密码</li>
+<li>小型化：协议实现非常小，适合嵌入式设备</li>
+</ul>
+<p>TFTP的典型应用场景：</p>
+<ul>
+<li>网络设备启动：路由器、交换机等网络设备通过TFTP加载操作系统镜像</li>
+<li>无盘工作站启动：无盘工作站通过TFTP获取启动文件</li>
+<li>配置文件管理：网络管理员通过TFTP备份和恢复设备配置</li>
+</ul>
+<p>TFTP的局限性：</p>
+<ul>
+<li>不可靠：基于UDP，没有内置的可靠性机制（虽然TFTP自己实现了简单的确认和重传）</li>
+<li>安全性差：没有认证和加密</li>
+<li>功能有限：只支持读写操作</li>
+<li>文件大小限制：默认块大小512字节，最大文件大小约32MB（可以通过选项扩展）</li>
+</ul>
+<h2>FTP与TFTP对比</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>FTP</th>
+<th>TFTP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>传输层协议</td>
+<td>TCP</td>
+<td>UDP</td>
+</tr>
+<tr>
+<td>端口</td>
+<td>20（数据）、21（控制）</td>
+<td>69</td>
+</tr>
+<tr>
+<td>可靠性</td>
+<td>高（TCP保证）</td>
+<td>低（简单确认机制）</td>
+</tr>
+<tr>
+<td>认证</td>
+<td>支持用户名/密码</td>
+<td>无</td>
+</tr>
+<tr>
+<td>功能</td>
+<td>丰富（目录浏览、权限管理等）</td>
+<td>简单（读写操作）</td>
+</tr>
+<tr>
+<td>复杂度</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>典型应用</td>
+<td>通用文件传输</td>
+<td>网络设备启动</td>
+</tr>
+</tbody></table>
+<h2>总结</h2>
+<p>FTP是互联网中最经典的文件传输协议，使用控制连接和数据连接分离的设计，支持主动和被动两种模式。TFTP是一个极简的文件传输协议，基于UDP，主要用于网络设备的启动和配置管理。</p>
+<p>虽然现在HTTP下载和云存储已经取代了FTP的很多应用场景，但理解FTP的工作原理对于网络工程师仍然很重要，因为很多网络设备仍然使用FTP/TFTP进行配置管理和固件升级。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="B"><p class="quiz-question">1. FTP使用几个TCP连接？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 1个</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 2个</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 3个</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 4个</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>FTP使用2个TCP连接：控制连接（端口21）用于传输命令和响应，数据连接（端口20或随机端口）用于传输文件数据。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. FTP被动模式相比主动模式的优势是什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 传输速度更快</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 更适合防火墙环境</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 使用更少的带宽</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 支持更多文件类型</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>被动模式下所有连接都由客户端发起，不会被客户端防火墙阻止。主动模式下服务器主动向客户端发起数据连接，可能被防火墙阻止。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="UDP"><p class="quiz-question">3. TFTP基于_____协议，使用端口69。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>UDP</p><p><strong>解析：</strong>TFTP（简单文件传输协议）基于UDP协议，与FTP基于TCP不同，TFTP更加简单轻量。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="控制连接使用21端口，用于传输FTP命令和服务器响应，整个会话期间保持打开。数据连接使用20端口（主动模式）或随机端口（被动模式），用于传输文件数据，每次传输时建立，传输完成后关闭。"><p class="quiz-question">4. FTP控制连接和数据连接分别使用什么端口？各自的作用是什么？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>控制连接使用21端口，用于传输FTP命令和服务器响应，整个会话期间保持打开。数据连接使用20端口（主动模式）或随机端口（被动模式），用于传输文件数据，每次传输时建立，传输完成后关闭。</p><p><strong>解析：</strong>FTP的双连接设计使得命令和数据可以分离传输，用户可以在文件传输过程中发送其他命令。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">5. 以下哪个是TFTP的典型应用场景？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> 网页文件上传</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> 邮件附件传输</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> 网络设备启动</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> 视频文件下载</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>TFTP常用于网络设备（路由器、交换机）的启动和配置管理，因为TFTP实现简单，适合嵌入式设备使用。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第10章</li><li>RFC 959 - FTP</li><li>RFC 1350 - TFTP</li></ul></div>
+</body>
+</html>

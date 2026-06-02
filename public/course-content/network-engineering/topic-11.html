@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IP数据包格式</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题11：IP数据包格式</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>IPv4</dt><dd>互联网协议第4版，使用32位地址，是目前互联网最广泛使用的网络层协议。理论上可提供约43亿个地址。</dd><dt>IPv6</dt><dd>互联网协议第6版，使用128位地址，是IPv4的下一代协议，地址空间极其庞大，解决了IPv4地址耗尽的问题。</dd><dt>TTL</dt><dd>生存时间，IP头部中的8位字段，每经过一个路由器减1，减到0时丢弃数据包。防止数据包在网络中无限循环。</dd><dt>协议号</dt><dd>IP头部中标识上层协议的字段，如6表示TCP，17表示UDP，1表示ICMP。告诉接收方把数据交给哪个协议处理。</dd><dt>首部长度</dt><dd>IP头部的长度，以4字节为单位。最小为5（即20字节），最大为15（即60字节）。</dd><dt>分片</dt><dd>当IP数据包长度超过链路MTU时，将其拆分成多个较小的片段传输的过程。接收方负责重组。</dd><dt>校验和</dt><dd>IP头部中用于检测传输错误的字段。只校验头部，不校验数据部分（数据校验由上层协议负责）。</dd><dt>生存时间</dt><dd>即TTL，IP数据包在网络中的最大存活时间。每经过一个路由器TTL减1，为0时丢弃并向源端发送ICMP超时报文。</dd></dl></div><h2>数据包：网络层的&quot;包裹&quot;</h2>
+<p>前面学了IP地址和子网划分，现在我们来看IP层到底是怎么把数据从源送到目的地的。</p>
+<p>网络层的协议数据单元叫<strong>数据包（Packet）</strong>。当你的电脑发送一个HTTP请求时，传输层的TCP段会被交给网络层，网络层加上IP头部，封装成IP数据包，然后交给数据链路层。</p>
+<p>IP头部就像包裹上的运单——写着从哪来、到哪去、多重、里面装的是什么。</p>
+<h2>IPv4头部结构</h2>
+<p>一个标准的IPv4头部是<strong>20字节</strong>（不含选项字段），各字段如下：</p>
+<h3>固定字段（20字节）</h3>
+<p><strong>版本（Version）</strong> — 4位
+标识IP协议版本。IPv4的值是4，IPv6的值是6。</p>
+<p><strong>首部长度（IHL）</strong> — 4位
+IP头部的长度，以4字节为单位。最小值5（即5×4=20字节），最大值15（即15×4=60字节）。大多数情况下头部就是20字节。</p>
+<p><strong>服务类型（TOS/DSCP/ECN）</strong> — 8位
+用于QoS（服务质量）标记，告诉路由器这个包要不要优先处理。比如语音通话的数据包可以标记为高优先级。</p>
+<p><strong>总长度（Total Length）</strong> — 16位
+整个IP数据包的长度（头部+数据），以字节为单位。最大65535字节。但实际上数据包不会这么大，因为以太网的MTU只有1500字节。</p>
+<p><strong>标识（Identification）</strong> — 16位
+用于分片重组。同一个数据包的所有分片共享相同的标识值，接收方根据这个值把分片拼回去。</p>
+<p><strong>标志（Flags）</strong> — 3位
+控制分片行为：</p>
+<ul>
+<li>第1位：保留</li>
+<li>第2位：DF（Don&#39;t Fragment），1表示不允许分片</li>
+<li>第3位：MF（More Fragments），1表示后面还有分片</li>
+</ul>
+<p><strong>片偏移（Fragment Offset）</strong> — 13位
+该分片在原始数据包中的位置，以8字节为单位。接收方用它来正确排列分片顺序。</p>
+<p><strong>生存时间（TTL）</strong> — 8位
+数据包的最大跳数。每经过一个路由器减1，减到0就丢弃。Windows默认TTL为128，Linux为64。这个机制防止数据包在网络中无限循环。</p>
+<p><strong>协议号（Protocol）</strong> — 8位
+标识数据部分应该交给哪个上层协议：</p>
+<ul>
+<li>1 = ICMP</li>
+<li>6 = TCP</li>
+<li>17 = UDP</li>
+</ul>
+<p><strong>首部校验和（Header Checksum）</strong> — 16位
+只校验IP头部，不校验数据部分。每经过一个路由器头部都会变化（TTL减1），所以每跳都要重新计算。</p>
+<p><strong>源IP地址</strong> — 32位
+发送方的IP地址。</p>
+<p><strong>目的IP地址</strong> — 32位
+接收方的IP地址。</p>
+<h2>数据包的分片</h2>
+<p>以太网的MTU是1500字节，但IP数据包最大可以是65535字节。当一个数据包太大，超过了链路的MTU怎么办？</p>
+<p>路由器会进行<strong>分片</strong>——把一个大数据包拆成多个小片段。每个片段都有自己的IP头部，可以独立传输。接收方收到所有片段后，根据标识和片偏移重组还原。</p>
+<h3>类比：拆分快递</h3>
+<p>你要寄一个超大包裹，但快递公司的箱子最大只能装15公斤。你只好把大包裹拆成几个小箱子，每个箱子上写好&quot;第几箱/共几箱&quot;和&quot;这是原始包裹的哪个部分&quot;。收件人收到所有箱子后，按照编号重新拼装。</p>
+<p>不过分片有性能开销，所以现代网络尽量避免分片——上层协议（如TCP）会根据路径MTU自动调整数据段大小。</p>
+<h2>IPv6：下一代协议</h2>
+<p>IPv4的32位地址理论上只能提供约43亿个地址，早在2011年就已经分配完毕。<strong>IPv6</strong>是IPv4的继任者，使用<strong>128位</strong>地址，地址空间大到可以给地球上的每一粒沙子都分配一个IP地址。</p>
+<h3>IPv6地址格式</h3>
+<p>IPv6地址用冒号分隔的8组16进制数表示：</p>
+<p>2001:0db8:85a3:0000:0000:8a2e:0370:7334</p>
+<p>简化规则：</p>
+<ul>
+<li>每组前导零可以省略：2001:db8:85a3:0:0:8a2e:370:7334</li>
+<li>连续的全零组可以用双冒号代替：2001:db8:85a3::8a2e:370:7334</li>
+</ul>
+<h3>IPv6 vs IPv4</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>IPv4</th>
+<th>IPv6</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>地址长度</td>
+<td>32位</td>
+<td>128位</td>
+</tr>
+<tr>
+<td>地址数量</td>
+<td>约43亿</td>
+<td>约3.4×10^38</td>
+</tr>
+<tr>
+<td>表示方式</td>
+<td>点分十进制</td>
+<td>冒号十六进制</td>
+</tr>
+<tr>
+<td>头部长度</td>
+<td>可变（20-60字节）</td>
+<td>固定40字节</td>
+</tr>
+<tr>
+<td>分片</td>
+<td>路由器和发送方都可以</td>
+<td>只在发送方</td>
+</tr>
+<tr>
+<td>校验和</td>
+<td>有（头部校验）</td>
+<td>无（交给上层）</td>
+</tr>
+<tr>
+<td>广播</td>
+<td>有</td>
+<td>用组播替代</td>
+</tr>
+</tbody></table>
+<h3>IPv6的优势</h3>
+<ul>
+<li><strong>地址充足</strong>：不再需要NAT，每台设备都可以有全球唯一地址</li>
+<li><strong>头部简化</strong>：固定40字节，路由器处理更快</li>
+<li><strong>自动配置</strong>：设备可以自动生成IPv6地址（SLAAC），不需要DHCP</li>
+<li><strong>安全性</strong>：IPsec（加密和认证）是IPv6的标配</li>
+</ul>
+<h2>本课小结</h2>
+<ul>
+<li>IPv4头部固定20字节，包含版本、长度、TTL、协议号、源/目的IP等关键字段</li>
+<li><strong>TTL</strong>防止数据包无限循环，每经过一个路由器减1</li>
+<li><strong>协议号</strong>标识上层协议：1=ICMP、6=TCP、17=UDP</li>
+<li><strong>分片</strong>是当数据包超过链路MTU时的拆分机制</li>
+<li><strong>IPv6</strong>使用128位地址，解决了IPv4地址耗尽问题</li>
+<li>IPv6头部固定40字节，去掉了校验和，只在发送方分片</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="20"><p class="quiz-question">1. IPv4头部的固定长度为________字节。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>20</p><p><strong>解析：</strong>IPv4头部固定部分为20字节（不含选项字段），首部长度字段最小值为5，表示5×4=20字节。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. IP头部中的TTL字段的作用是什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 标识数据包大小</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 防止数据包无限循环</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 标识上层协议</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 控制分片</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>TTL（生存时间）每经过一个路由器减1，减到0时丢弃数据包，防止路由环路导致数据包在网络中无限循环。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">3. IP头部中协议号为6表示上层协议是？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> ICMP</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> UDP</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> TCP</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> ARP</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>协议号6表示TCP，17表示UDP，1表示ICMP。这个字段告诉接收方应该把数据交给哪个上层协议处理。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">4. IPv6地址的长度是多少位？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 32位</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> 64位</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 128位</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> 256位</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>IPv6使用128位地址，是IPv4（32位）的4倍，地址空间约3.4×10的38次方，足以给每台设备分配全球唯一地址。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="1.地址从32位扩展到128位，解决地址耗尽；2.头部固定40字节，处理更快；3.去掉了头部校验和，交给上层处理；4.分片只在发送方进行；5.支持自动配置（SLAAC）；6.IPsec为标配。"><p class="quiz-question">5. IPv6相比IPv4有哪些主要改进？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>1.地址从32位扩展到128位，解决地址耗尽；2.头部固定40字节，处理更快；3.去掉了头部校验和，交给上层处理；4.分片只在发送方进行；5.支持自动配置（SLAAC）；6.IPsec为标配。</p><p><strong>解析：</strong>IPv6的设计吸取了IPv4的经验教训，在地址空间、头部效率、安全性等方面都有显著改进。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第3章 - IP数据包</li><li>《计算机网络》谢希仁 第4章 - IP数据报格式</li><li>RFC 791 - Internet Protocol</li><li>RFC 2460 - Internet Protocol, Version 6</li></ul></div>
+</body>
+</html>

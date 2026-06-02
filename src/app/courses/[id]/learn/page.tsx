@@ -154,6 +154,23 @@ export default function CourseLearnPage() {
                     title={activeMaterial.title}
                   />
                 </div>
+              ) : activeMaterial.file_path?.endsWith('.html') ? (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+                  <iframe
+                    src={activeMaterial.file_path}
+                    className="w-full min-h-[600px] border-0"
+                    title={activeMaterial.title}
+                    onLoad={(e) => {
+                      const iframe = e.currentTarget;
+                      try {
+                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (doc) {
+                          iframe.style.height = doc.body.scrollHeight + 50 + 'px';
+                        }
+                      } catch {}
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center mb-6">
                   <div className="text-5xl mb-4">📄</div>

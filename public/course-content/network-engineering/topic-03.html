@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据封装与解封装</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>数据封装与解封装</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>封装</dt><dd>数据从上层到下层时，每一层都在数据前面加上自己的头部信息，像套娃一样层层包裹</dd><dt>解封装</dt><dd>数据从下层到上层时，逐层剥去头部信息，还原出原始数据</dd><dt>PDU</dt><dd>协议数据单元，每层传输的数据单位名称不同：Data、Segment、Packet、Frame、Bits</dd><dt>帧</dt><dd>数据链路层的PDU，由帧头+数据+帧尾组成</dd><dt>帧头</dt><dd>帧的开头，包含源MAC和目标MAC地址，告诉交换机帧从哪来到哪去</dd><dt>帧尾</dt><dd>帧的结尾，包含FCS校验码，检测数据是否损坏</dd><dt>MAC地址</dt><dd>网卡的物理地址，全球唯一，格式如AA:BB:CC:DD:EE:FF</dd><dt>段</dt><dd>传输层的PDU，TCP/UDP头+应用数据</dd><dt>包</dt><dd>网络层的PDU，IP头+段</dd></dl></div><h2>什么是封装？</h2>
+<p>当你在微信上发送一条消息&quot;你好&quot;，这条消息并不是原封不动地从你的手机传到对方手机的。它会经历一个叫<strong>封装</strong>的过程——每一层网络协议都在数据上&quot;贴&quot;上自己的标签，就像寄快递时一层层包装。</p>
+<h3>生活类比：寄快递</h3>
+<ol>
+<li>你写好信的内容（应用层数据）</li>
+<li>装进信封，写上收件人姓名（传输层加TCP头——标识是哪个程序的数据）</li>
+<li>装进快递箱，写上收件地址（网络层加IP头——标识发到哪台设备）</li>
+<li>快递公司贴面单，写上发件人和收件人的手机号（数据链路层加帧头——标识在局域网内从哪来、到哪去）</li>
+<li>卡车运输（物理层——变成电信号或光信号传输）</li>
+</ol>
+<h2>封装过程详解</h2>
+<Diagram type="encapsulation" /><p>每一层都做同一件事：<strong>在数据前面加上自己的头部信息</strong>（数据链路层还会在末尾加帧尾）。</p>
+<h3>各层做了什么？</h3>
+<p><strong>应用层</strong> — 你的应用程序生成原始数据。比如你输入&quot;你好&quot;，这就是应用层的Data。</p>
+<p><strong>传输层</strong> — 在数据前面加上TCP头部。TCP头部包含两个关键信息：<strong>源端口</strong>和<strong>目标端口</strong>。端口号用来区分同一台设备上的不同程序——HTTP用80端口，HTTPS用443端口，微信用自己的端口。加了TCP头的数据叫<strong>段（Segment）</strong>。</p>
+<p><strong>网络层</strong> — 在段前面加上IP头部。IP头部包含<strong>源IP地址</strong>和<strong>目标IP地址</strong>，路由器根据目标IP地址决定数据包往哪转发。加了IP头的数据叫<strong>包（Packet）</strong>。</p>
+<p><strong>数据链路层</strong> — 在包的前面加上<strong>帧头</strong>，末尾加上<strong>帧尾</strong>，组装成<strong>帧（Frame）</strong>。</p>
+<ul>
+<li><strong>帧头</strong>包含：源MAC地址和目标MAC地址。MAC地址是网卡的物理地址，全球唯一，格式如 AA:BB:CC:DD:EE:FF。交换机根据目标MAC地址把帧转发到正确的端口。</li>
+<li><strong>帧尾</strong>包含：FCS（帧校验序列），是一串校验码。接收方用它来检查数据在传输过程中是否损坏——如果校验失败，说明数据被干扰了，这个帧会被丢弃。</li>
+</ul>
+<p><strong>物理层</strong> — 把帧转换成比特流（0和1），通过网线、光纤或无线电波发送出去。</p>
+<h2>各层的PDU</h2>
+<p>每一层传输的数据单位有专门的名称，叫<strong>PDU（Protocol Data Unit，协议数据单元）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>PDU名称</th>
+<th>中文</th>
+<th>结构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>应用层</td>
+<td>Data</td>
+<td>数据</td>
+<td>原始应用数据</td>
+</tr>
+<tr>
+<td>传输层</td>
+<td>Segment</td>
+<td>段</td>
+<td>TCP/UDP头 + 应用数据</td>
+</tr>
+<tr>
+<td>网络层</td>
+<td>Packet</td>
+<td>包</td>
+<td>IP头 + 段</td>
+</tr>
+<tr>
+<td>数据链路层</td>
+<td>Frame</td>
+<td>帧</td>
+<td>帧头 + 包 + 帧尾</td>
+</tr>
+<tr>
+<td>物理层</td>
+<td>Bits</td>
+<td>比特</td>
+<td>一串0和1</td>
+</tr>
+</tbody></table>
+<h2>解封装：接收方怎么还原数据？</h2>
+<p>接收方执行与封装相反的过程——从下往上，逐层拆去头部：</p>
+<ol>
+<li><strong>物理层</strong>接收比特流，还原成帧</li>
+<li><strong>数据链路层</strong>检查帧尾的FCS校验码，确认数据没损坏，然后去掉帧头帧尾，取出包交给网络层</li>
+<li><strong>网络层</strong>读取IP头部，确认这个包是发给自己的，然后去掉IP头，取出段交给传输层</li>
+<li><strong>传输层</strong>读取TCP头部，根据端口号把数据交给对应的应用程序，然后去掉TCP头</li>
+<li><strong>应用层</strong>收到原始数据&quot;你好&quot;</li>
+</ol>
+<blockquote>
+<p>核心原则：每层只看自己该看的头部，其他层的内容一律视为&quot;数据&quot;。这就是分层的威力——应用层不需要知道数据是通过Wi-Fi还是光纤传输的。</p>
+</blockquote>
+<h2>本课小结</h2>
+<ul>
+<li><strong>封装</strong>是数据从上到下逐层加头部的过程，<strong>解封装</strong>是反向逐层拆头部的过程</li>
+<li>每层的PDU有专门名称：Data→Segment→Packet→Frame→Bits</li>
+<li><strong>帧头帧尾</strong>是数据链路层特有的：帧头含MAC地址，帧尾含校验码</li>
+<li><strong>TCP头部</strong>标识端口号（哪个程序），<strong>IP头部</strong>标识IP地址（哪台设备）</li>
+<li>分层的核心意义：每层各司其职，互不干扰</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. 传输层的PDU叫什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> Frame</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> Packet</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> Segment</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> Bits</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>传输层的PDU叫Segment（段），包含TCP/UDP头部和数据。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">2. IP地址信息在哪一层被添加？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 应用层</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 传输层</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 网络层</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 数据链路层</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>IP地址在网络层的IP头部中被添加。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="帧（Frame）"><p class="quiz-question">3. 数据链路层的PDU叫______，包含帧头、数据和帧尾。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>帧（Frame）</p><p><strong>解析：</strong>数据链路层的PDU是帧（Frame）。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第2章</li><li>《TCP/IP详解 卷1》第1-2章</li></ul></div>
+</body>
+</html>

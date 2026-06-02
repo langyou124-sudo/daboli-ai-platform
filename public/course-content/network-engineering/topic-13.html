@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路由基础与路由表</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题13：路由基础与路由表</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>路由器</dt><dd>工作在网络层的设备，根据IP地址和路由表决定数据包的转发路径，连接不同的网络。</dd><dt>路由表</dt><dd>路由器维护的一张表，记录了目的网络、下一跳地址、出接口等信息，路由器根据这张表决定数据包往哪转发。</dd><dt>静态路由</dt><dd>由管理员手动配置的路由条目，不会自动变化。适合小型网络或末梢网络，管理成本高但可控性强。</dd><dt>默认路由</dt><dd>当路由表中没有匹配条目时使用的路由，通常指向互联网出口。目的地址为0.0.0.0/0，也叫默认网关。</dd><dt>下一跳</dt><dd>路由表中指示的下一个路由器的IP地址，数据包需要先到达下一跳，再由下一跳继续转发。</dd><dt>最长前缀匹配</dt><dd>路由器在查找路由表时，选择与目的地址匹配的最长前缀（最精确）的路由条目。这是路由选择的核心规则。</dd><dt>管理距离</dt><dd>衡量路由来源可信度的数值，越小越可信。直连路由为0，静态路由为1，OSPF为110，RIP为120。</dd><dt>度量值</dt><dd>衡量到达目的网络路径优劣的指标，如跳数、带宽、延迟等。同一协议中度量值越小路径越优。</dd></dl></div><h2>路由器：网络世界的&quot;十字路口指挥员&quot;</h2>
+<p>如果把互联网比作一个巨大的公路网，那<strong>路由器</strong>就是每一个十字路口的指挥员。它的职责很简单：收到一个数据包，看看目的地是哪，然后决定往哪个方向转。</p>
+<h3>路由器的工作过程</h3>
+<p>当路由器收到一个IP数据包时：</p>
+<ol>
+<li><strong>解封装</strong>：去掉数据链路层的帧头，取出IP数据包</li>
+<li><strong>查路由表</strong>：用目的IP地址在路由表中查找匹配条目</li>
+<li><strong>转发决策</strong>：<ul>
+<li>找到匹配：把数据包从对应的出接口转发出去</li>
+<li>没找到匹配：如果有默认路由就按默认路由转发，否则丢弃并返回ICMP目的不可达</li>
+</ul>
+</li>
+<li><strong>重新封装</strong>：给数据包加上新的帧头（下一跳的MAC地址），从出接口发出</li>
+</ol>
+<p>注意：转发过程中，<strong>IP头部的源和目的地址不变</strong>，但数据链路层的帧头帧尾会每跳都重新生成。</p>
+<h2>路由表：路由器的&quot;导航地图&quot;</h2>
+<p>路由表是路由器转发数据包的核心依据。每台路由器都维护着一张路由表，记录了&quot;要去某个网络，应该往哪走&quot;。</p>
+<h3>路由表的典型结构</h3>
+<table>
+<thead>
+<tr>
+<th>目的网络</th>
+<th>前缀长度</th>
+<th>下一跳</th>
+<th>出接口</th>
+<th>来源</th>
+<th>管理距离</th>
+<th>度量值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>192.168.1.0</td>
+<td>/24</td>
+<td>直连</td>
+<td>GE0/0</td>
+<td>直连</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>10.0.0.0</td>
+<td>/8</td>
+<td>192.168.1.254</td>
+<td>GE0/1</td>
+<td>静态</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>172.16.0.0</td>
+<td>/16</td>
+<td>10.0.0.1</td>
+<td>GE0/1</td>
+<td>OSPF</td>
+<td>110</td>
+<td>20</td>
+</tr>
+<tr>
+<td>0.0.0.0</td>
+<td>/0</td>
+<td>203.0.113.1</td>
+<td>GE0/2</td>
+<td>静态</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody></table>
+<p>各字段含义：</p>
+<ul>
+<li><strong>目的网络 + 前缀长度</strong>：要去的网络</li>
+<li><strong>下一跳</strong>：下一个路由器的IP地址</li>
+<li><strong>出接口</strong>：从哪个物理接口转发出去</li>
+<li><strong>来源</strong>：这条路由是怎么学到的（直连、静态、OSPF等）</li>
+<li><strong>管理距离</strong>：路由来源的可信度（越小越可信）</li>
+<li><strong>度量值</strong>：路径的优劣指标（越小越优）</li>
+</ul>
+<h2>最长前缀匹配原则</h2>
+<p>路由表里可能有多条路由都能匹配同一个目的地址。路由器怎么选？</p>
+<p>规则是<strong>最长前缀匹配</strong>：选择前缀长度最长（最精确）的那条路由。</p>
+<h3>举例</h3>
+<p>路由表里有两条路由：</p>
+<ul>
+<li>192.168.0.0/16 → 下一跳 A</li>
+<li>192.168.1.0/24 → 下一跳 B</li>
+</ul>
+<p>目的地址是192.168.1.100。两条路由都能匹配，但/24比/16更精确，所以选择下一跳B。</p>
+<p>这就像你要去&quot;北京市海淀区中关村大街1号&quot;，如果有两条路——一条通向&quot;北京市&quot;，一条通向&quot;海淀区中关村大街&quot;——你当然选更精确的那条。</p>
+<h2>路由的来源</h2>
+<p>路由表中的路由有三种来源：</p>
+<h3>1. 直连路由（管理距离0）</h3>
+<p>路由器接口配置了IP地址并启用后，自动产生的路由。可信度最高。</p>
+<h3>2. 静态路由（管理距离1）</h3>
+<p>管理员手动配置的路由。适合小型网络或末梢网络（只有一个出口的网络）。</p>
+<p>优点：简单、可控、不消耗带宽
+缺点：网络拓扑变化时需要手动修改，不适合大型网络</p>
+<h3>3. 动态路由</h3>
+<p>路由器之间通过<strong>路由协议</strong>（如OSPF、RIP、BGP）自动交换路由信息。适合大型网络。</p>
+<p>优点：自动适应网络变化
+缺点：消耗带宽和CPU资源，配置更复杂</p>
+<h2>默认路由</h2>
+<p>当路由表中没有匹配的条目时，路由器会使用<strong>默认路由</strong>（也叫默认网关）。</p>
+<p>默认路由的目的地址是 0.0.0.0/0，匹配所有地址。它是路由表的&quot;兜底方案&quot;。</p>
+<p>你家路由器就有一条默认路由，指向运营商的路由器。当你访问百度时，你的路由器不知道百度的服务器在哪，就把数据包发给运营商，让运营商去想办法。</p>
+<h2>本课小结</h2>
+<ul>
+<li><strong>路由器</strong>根据IP地址和路由表转发数据包，连接不同的网络</li>
+<li><strong>路由表</strong>记录目的网络、下一跳、出接口等信息，是转发的核心依据</li>
+<li><strong>最长前缀匹配</strong>：多条路由匹配时，选择前缀最长（最精确）的</li>
+<li>路由有三种来源：<strong>直连</strong>（自动）、<strong>静态</strong>（手动）、<strong>动态</strong>（协议）</li>
+<li><strong>默认路由</strong>（0.0.0.0/0）是兜底方案，匹配所有目的地址</li>
+<li><strong>管理距离</strong>衡量路由来源可信度，直连0 &lt; 静态1 &lt; OSPF110 &lt; RIP120</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="B"><p class="quiz-question">1. 路由器根据什么信息来决定数据包的转发方向？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> MAC地址</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> IP地址和路由表</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 端口号</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 域名</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>路由器工作在网络层，根据数据包的目的IP地址查找路由表，决定从哪个接口转发以及下一跳地址。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. 路由表中有两条路由：192.168.0.0/16和192.168.1.0/24，目的地址为192.168.1.100，应选择哪条？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 192.168.0.0/16</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 192.168.1.0/24</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 随机选择</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 都不选</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>根据最长前缀匹配原则，/24比/16更精确，所以选择192.168.1.0/24这条路由。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="0.0.0.0/0"><p class="quiz-question">3. 默认路由的目的地址是________。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>0.0.0.0/0</p><p><strong>解析：</strong>默认路由用0.0.0.0/0表示，匹配所有目的地址，是路由表中最后的兜底方案。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">4. 以下哪种路由的管理距离最小（最可信）？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 静态路由</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> OSPF路由</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 直连路由</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> RIP路由</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>直连路由管理距离为0，是最可信的路由来源。静态路由为1，OSPF为110，RIP为120。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="静态路由：优点是简单、可控、不消耗带宽；缺点是不能自动适应网络变化，适合小型网络。动态路由：优点是自动学习和适应网络变化；缺点是消耗带宽和CPU，配置复杂，适合大型网络。"><p class="quiz-question">5. 静态路由和动态路由各有什么优缺点？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>静态路由：优点是简单、可控、不消耗带宽；缺点是不能自动适应网络变化，适合小型网络。动态路由：优点是自动学习和适应网络变化；缺点是消耗带宽和CPU，配置复杂，适合大型网络。</p><p><strong>解析：</strong>选择静态还是动态路由取决于网络规模和管理需求。小型末梢网络用静态，大型复杂网络用动态。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第4章 - 路由</li><li>《计算机网络》谢希仁 第4章 - 路由选择</li><li>RFC 1812 - Requirements for IP Version 4 Routers</li></ul></div>
+</body>
+</html>

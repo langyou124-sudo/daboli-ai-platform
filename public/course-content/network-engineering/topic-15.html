@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP流量控制与拥塞控制</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>TCP流量控制与拥塞控制</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>滑动窗口</dt><dd>TCP中控制数据发送量的机制，窗口大小决定了一次可以发送多少未确认的数据</dd><dt>接收窗口</dt><dd>接收方通告的窗口大小，表示接收方缓冲区还能容纳多少数据</dd><dt>拥塞窗口</dt><dd>发送方根据网络拥塞程度维护的窗口大小，用于拥塞控制</dd><dt>慢启动</dt><dd>TCP拥塞控制的初始阶段，拥塞窗口从1MSS开始，每收到一个ACK增加1MSS，呈指数增长</dd><dt>拥塞避免</dt><dd>拥塞窗口达到阈值后进入的阶段，每个RTT窗口增加1MSS，呈线性增长</dd><dt>快重传</dt><dd>收到3个重复ACK时立即重传丢失的报文段，而不等待超时</dd><dt>快恢复</dt><dd>快重传之后将阈值减半、窗口设为新阈值，直接进入拥塞避免阶段</dd><dt>RTT</dt><dd>往返时间，数据从发送到收到确认的时间延迟</dd></dl></div><h2>引入：为什么需要流量控制和拥塞控制？</h2>
+<p>在上一个课题中，我们学习了TCP如何通过三次握手建立连接、通过序列号和确认号保证可靠传输。但仅仅保证可靠性是不够的——如果发送方不顾接收方的处理能力，一股脑地发送大量数据，接收方的缓冲区就会溢出，导致数据丢失。同样，如果发送方不顾网络的承载能力，大量数据涌入网络，就会造成网络拥塞，导致大面积的丢包和延迟。</p>
+<p>TCP的解决方案是两个独立但相关的控制机制：流量控制和拥塞控制。流量控制解决的是&quot;发送方和接收方之间的速度匹配&quot;问题，拥塞控制解决的是&quot;发送方和网络之间的速度匹配&quot;问题。</p>
+<h2>滑动窗口机制</h2>
+<p>TCP使用滑动窗口（Sliding Window）机制来控制数据的发送。窗口是一个连续的序列号范围，落在窗口内的数据可以被发送而无需等待确认。</p>
+<p>发送窗口的大小取决于两个因素中较小的一个：</p>
+<ul>
+<li>接收窗口（rwnd）：接收方通告的窗口大小，表示接收方缓冲区还能容纳多少数据</li>
+<li>拥塞窗口（cwnd）：发送方根据网络拥塞程度自行维护的窗口大小</li>
+</ul>
+<p>实际发送窗口大小 = min(rwnd, cwnd)</p>
+<p>窗口的左边界随着已确认的数据向右移动，右边界根据窗口大小相应调整，这就是&quot;滑动&quot;的含义。</p>
+<h2>流量控制</h2>
+<p>流量控制的目的是防止发送方发送数据过快，导致接收方缓冲区溢出。接收方通过TCP首部中的&quot;窗口大小&quot;字段，告诉发送方自己还能接收多少数据。</p>
+<p>工作过程如下：</p>
+<ol>
+<li>连接建立时，双方通过SYN报文交换初始窗口大小</li>
+<li>数据传输过程中，接收方在每个ACK报文中通告当前的接收窗口大小</li>
+<li>发送方根据接收方通告的窗口大小调整自己的发送量</li>
+<li>如果接收方通告窗口大小为0，发送方必须停止发送数据</li>
+</ol>
+<p>当接收方缓冲区满了（窗口为0）时，发送方会启动一个持续定时器（Persist Timer），定期发送窗口探测报文，询问接收方是否恢复了接收能力。这避免了&quot;死锁&quot;——如果接收方发送的&quot;窗口更新&quot;报文丢失，双方就会永远等待。</p>
+<h2>拥塞控制概述</h2>
+<p>流量控制处理的是端到端的问题，而拥塞控制处理的是全局性的问题。当网络中的数据量超过网络的处理能力时，就会发生拥塞。拥塞的表现是：路由器队列溢出导致丢包，延迟急剧增加，吞吐量下降。</p>
+<p>TCP的拥塞控制基于一个核心原则：发送方根据网络的拥塞程度动态调整发送速率。拥塞程度通过丢包事件来推断——如果发生超时或收到重复ACK，说明网络可能发生了拥塞。</p>
+<p>TCP维护一个拥塞窗口（cwnd），初始值通常为1个MSS（最大报文段长度）。拥塞控制算法通过调整cwnd来控制发送速率。</p>
+<h2>慢启动</h2>
+<p>慢启动（Slow Start）是TCP连接刚建立或检测到拥塞后恢复时的阶段。虽然叫&quot;慢&quot;启动，但实际上增长速度很快——指数增长。</p>
+<p>慢启动的过程：</p>
+<ol>
+<li>连接建立后，cwnd初始化为1个MSS</li>
+<li>每收到一个ACK，cwnd增加1个MSS（也就是说，每经过一个RTT，cwnd翻倍）</li>
+<li>当cwnd达到慢启动阈值（ssthresh）时，转入拥塞避免阶段</li>
+</ol>
+<p>例如：cwnd=1 → 发送1个MSS → 收到ACK → cwnd=2 → 发送2个MSS → 收到2个ACK → cwnd=4 → 发送4个MSS → ...</p>
+<p>如果发生超时：ssthresh = cwnd/2，cwnd重新设为1，重新进入慢启动。</p>
+<h2>拥塞避免</h2>
+<p>当cwnd达到ssthresh后，TCP进入拥塞避免（Congestion Avoidance）阶段。在这个阶段，cwnd的增长从指数变为线性——每个RTT增加1个MSS。</p>
+<p>拥塞避免的过程：</p>
+<ol>
+<li>每收到一个ACK，cwnd增加 MSS * (MSS/cwnd)</li>
+<li>每经过一个RTT，cwnd大约增加1个MSS</li>
+<li>如果检测到拥塞（超时或重复ACK），执行相应的处理</li>
+</ol>
+<p>这种线性增长是一种&quot;谨慎试探&quot;——TCP不确定网络还能承受多少流量，所以慢慢增加。</p>
+<h2>快重传与快恢复</h2>
+<p>当发送方连续收到3个重复ACK时，说明网络中可能有报文段丢失了（但后续的报文段到达了，否则不会有重复ACK）。这时候有两种处理方式：</p>
+<p>快重传（Fast Retransmit）：立即重传可能丢失的报文段，而不等待超时。这比超时重传快得多。</p>
+<p>快恢复（Fast Recovery）：在快重传之后，TCP Reno和TCP NewReno使用快恢复算法：</p>
+<ol>
+<li>ssthresh = cwnd/2</li>
+<li>cwnd = ssthresh + 3（加3是因为收到了3个重复ACK，说明有3个数据包离开了网络）</li>
+<li>每收到一个重复ACK，cwnd增加1个MSS</li>
+<li>收到新的ACK后，cwnd设为ssthresh，进入拥塞避免阶段</li>
+</ol>
+<p>如果没有快恢复，TCP会像超时一样回到慢启动，这会导致发送速率急剧下降，影响性能。</p>
+<h2>TCP拥塞控制算法的演进</h2>
+<p>TCP拥塞控制算法经历了多次演进：</p>
+<ul>
+<li>TCP Tahoe（1988）：包含慢启动、拥塞避免和快重传。检测到拥塞后，无论是超时还是3个重复ACK，都回到慢启动。</li>
+<li>TCP Reno（1990）：在Tahoe基础上增加了快恢复。3个重复ACK触发快重传+快恢复，只有超时才回到慢启动。</li>
+<li>TCP NewReno（1999）：改进了Reno在多个报文段丢失时的性能。</li>
+<li>TCP SACK（选择性确认）：允许接收方告知发送方哪些报文段已收到，哪些缺失，使发送方可以精确重传。</li>
+<li>TCP CUBIC（2008）：Linux默认算法，使用三次函数来调整cwnd，在高带宽延迟积网络中表现更好。</li>
+</ul>
+<h2>RTT与超时计算</h2>
+<p>TCP的超时时间（RTO，Retransmission Timeout）是根据往返时间（RTT）动态计算的。如果RTO太小，会导致不必要的重传；如果太大，丢失的报文段要等很久才会被重传。</p>
+<p>TCP使用Jacobson/Karels算法来计算RTO：</p>
+<ol>
+<li>测量每个报文段的RTT样本</li>
+<li>计算加权移动平均：SRTT = (1-a) * SRTT + a * RTT（a通常取1/8）</li>
+<li>计算RTT偏差：RTTVAR = (1-b) * RTTVAR + b * |SRTT - RTT|（b通常取1/4）</li>
+<li>RTO = SRTT + 4 * RTTVAR</li>
+</ol>
+<p>这种平滑算法可以避免单个异常RTT样本对RTO的影响。</p>
+<h2>总结</h2>
+<p>TCP的流量控制和拥塞控制是保证网络高效运行的关键机制。流量控制通过接收窗口防止接收方缓冲区溢出，拥塞控制通过拥塞窗口防止网络过载。慢启动、拥塞避免、快重传、快恢复这四个算法协同工作，使TCP能够在不同网络条件下自适应地调整发送速率。</p>
+<p>理解这些机制对于网络性能调优和故障排查非常重要。例如，如果发现TCP连接的吞吐量很低，可能需要检查窗口大小设置、网络拥塞状况或拥塞控制算法的选择。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. TCP实际发送窗口大小由什么决定？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 仅接收窗口</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 仅拥塞窗口</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 接收窗口和拥塞窗口中较小的一个</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 接收窗口和拥塞窗口中较大的一个</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>TCP的实际发送窗口大小 = min(rwnd, cwnd)。接收窗口防止接收方溢出，拥塞窗口防止网络过载，取较小值以同时满足两个约束。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="2"><p class="quiz-question">2. TCP慢启动阶段，每经过一个RTT，拥塞窗口cwnd变为原来的_____倍。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>2</p><p><strong>解析：</strong>慢启动阶段，每收到一个ACK，cwnd增加1个MSS。一个RTT内发送的数据都能收到ACK，所以cwnd翻倍，呈指数增长。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">3. 当发送方连续收到3个重复ACK时，TCP会执行什么操作？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> 超时重传</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> 快重传</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> 重新建立连接</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> 停止发送</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>收到3个重复ACK说明可能有报文段丢失，但后续报文段已到达。TCP执行快重传，立即重传可能丢失的报文段，而不等待超时。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="慢启动阶段cwnd指数增长（每RTT翻倍），用于快速探测可用带宽；拥塞避免阶段cwnd线性增长（每RTT增加1个MSS），用于谨慎试探网络容量。当cwnd达到ssthresh时从慢启动转入拥塞避免。"><p class="quiz-question">4. 简述TCP慢启动和拥塞避免的区别。</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>慢启动阶段cwnd指数增长（每RTT翻倍），用于快速探测可用带宽；拥塞避免阶段cwnd线性增长（每RTT增加1个MSS），用于谨慎试探网络容量。当cwnd达到ssthresh时从慢启动转入拥塞避免。</p><p><strong>解析：</strong>慢启动是"快跑"，快速利用空闲带宽；拥塞避免是"慢走"，避免突然注入大量数据造成拥塞。两者通过ssthresh阈值切换。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">5. TCP Reno在检测到超时后，cwnd会如何变化？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> cwnd不变</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> cwnd减半</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> cwnd设为1个MSS并重新慢启动</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> cwnd设为ssthresh</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>超时说明网络严重拥塞，TCP Reno将ssthresh设为cwnd/2，cwnd重新设为1个MSS，从慢启动阶段重新开始。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第6章</li><li>RFC 5681 - TCP Congestion Control</li></ul></div>
+</body>
+</html>

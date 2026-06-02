@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网络拓扑结构</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>网络拓扑结构</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>拓扑</dt><dd>网络中设备的物理或逻辑布局方式，决定了设备之间如何连接</dd><dt>星型拓扑</dt><dd>所有设备连接到中心节点，最常见于家庭和办公网络</dd><dt>总线型拓扑</dt><dd>所有设备共享一条总线，早期以太网使用，现已淘汰</dd><dt>环型拓扑</dt><dd>设备首尾相连形成环，令牌环网使用，现已淘汰</dd><dt>网状拓扑</dt><dd>设备之间有多条路径，可靠性最高，用于互联网骨干网</dd><dt>混合拓扑</dt><dd>实际网络通常是多种拓扑的组合，如办公楼用树型，互联网用网状</dd></dl></div><h2>什么是拓扑？</h2>
+<p>拓扑是指网络中设备的<strong>物理或逻辑布局方式</strong>。通俗地说，就是&quot;设备之间怎么连&quot;。</p>
+<p>拓扑决定了网络的很多特性：好不好扩展、坏了影响多大、布线成本多高。选错拓扑，后面改起来很麻烦。</p>
+<h2>常见拓扑类型</h2>
+<h3>1. 星型拓扑（Star）— 最常见</h3>
+<p>所有设备都连接到一个<strong>中心节点</strong>（通常是交换机），形成星形结构。</p>
+<pre><code>    [PC1]
+      |
+[PC2]—[交换机]—[PC3]
+      |
+    [PC4]
+</code></pre>
+<p><strong>为什么最常用？</strong> 因为它解决了其他拓扑的很多痛点：</p>
+<ul>
+<li><strong>故障隔离好</strong>：某台设备坏了，只影响它自己，其他设备不受影响</li>
+<li><strong>易于管理</strong>：所有设备都连到中心，方便统一监控和配置</li>
+<li><strong>易于扩展</strong>：想加新设备，直接接到交换机上就行</li>
+</ul>
+<p><strong>缺点</strong>：中心节点是单点故障——交换机坏了，全网瘫痪。解决方案是给核心交换机做冗余备份。</p>
+<blockquote>
+<p>你家里的Wi-Fi路由器就是星型拓扑的中心节点，手机、电脑、电视都连着它。</p>
+</blockquote>
+<h3>2. 总线型拓扑（Bus）— 已淘汰</h3>
+<p>所有设备共享一条<strong>总线</strong>（主干电缆），数据在总线上广播传输。</p>
+<pre><code>[PC1]——[PC2]——[PC3]——[PC4]
+</code></pre>
+<p><strong>为什么淘汰了？</strong> 因为问题太多：</p>
+<ul>
+<li>总线是共享的，同一时间只能一台设备发送数据，否则会&quot;冲突&quot;</li>
+<li>总线断了，全网瘫痪</li>
+<li>故障排查困难——不知道是哪段线出了问题</li>
+</ul>
+<blockquote>
+<p>早期的10Base2以太网用的就是总线型，用同轴电缆把设备串在一起。现在已经完全被星型取代。</p>
+</blockquote>
+<h3>3. 环型拓扑（Ring）— 已淘汰</h3>
+<p>设备首尾相连形成一个环，数据沿环单向传输。</p>
+<pre><code>[PC1] → [PC2]
+  ↑       ↓
+[PC4] ← [PC3]
+</code></pre>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>结构简单，没有冲突问题（用令牌控制谁可以发送数据）</li>
+<li>但任何一个节点故障都会导致整个环断开</li>
+</ul>
+<blockquote>
+<p>令牌环网（Token Ring）是IBM在1980年代推出的技术，曾经和以太网竞争，最终败给了以太网。</p>
+</blockquote>
+<h3>4. 网状拓扑（Mesh）— 高可靠</h3>
+<p>设备之间有<strong>多条路径</strong>相连。</p>
+<pre><code>[PC1]——[PC2]
+  |  \  |
+  |   \ |
+[PC3]——[PC4]
+</code></pre>
+<p><strong>为什么可靠性最高？</strong> 因为任何一条线路断了，数据可以走其他路径到达目的地。就像城市有多条路通往同一个地方，一条路堵了可以绕行。</p>
+<p><strong>缺点</strong>：线路多，成本高，布线复杂。</p>
+<blockquote>
+<p>互联网的骨干网就是网状拓扑——多个核心节点之间有多条高速链路，确保任何一条链路故障都不会导致大面积断网。</p>
+</blockquote>
+<h2>拓扑对比</h2>
+<table>
+<thead>
+<tr>
+<th>拓扑</th>
+<th>可靠性</th>
+<th>成本</th>
+<th>扩展性</th>
+<th>现状</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>星型</td>
+<td>中</td>
+<td>中</td>
+<td>好</td>
+<td>最主流</td>
+</tr>
+<tr>
+<td>总线型</td>
+<td>低</td>
+<td>低</td>
+<td>差</td>
+<td>已淘汰</td>
+</tr>
+<tr>
+<td>环型</td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+<td>已淘汰</td>
+</tr>
+<tr>
+<td>网状</td>
+<td>高</td>
+<td>高</td>
+<td>好</td>
+<td>骨干网</td>
+</tr>
+</tbody></table>
+<h2>实际应用：混合拓扑</h2>
+<p>实际网络很少只用一种拓扑，通常是<strong>混合拓扑</strong>：</p>
+<ul>
+<li><strong>家庭网络</strong>：星型（路由器为中心）</li>
+<li><strong>办公楼</strong>：树型结构（核心交换机→楼层交换机→终端设备）</li>
+<li><strong>互联网</strong>：网状（多个核心节点互联，保证冗余）</li>
+<li><strong>数据中心</strong>：Spine-Leaf架构（一种特殊的网状拓扑，解决大规模服务器互联）</li>
+</ul>
+<blockquote>
+<p>理解拓扑有助于理解后续的路由和交换知识。路由器和交换机的工作方式，很大程度上取决于网络的拓扑结构。</p>
+</blockquote>
+<h2>本课小结</h2>
+<ul>
+<li><strong>拓扑</strong>是网络设备的布局方式，决定了可靠性、成本和扩展性</li>
+<li><strong>星型</strong>最常用（家庭/办公），<strong>网状</strong>最可靠（骨干网）</li>
+<li><strong>总线型和环型</strong>已被淘汰，了解即可</li>
+<li>实际网络是<strong>混合拓扑</strong></li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="D"><p class="quiz-question">1. 以下哪种拓扑结构可靠性最高？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 星型</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 总线型</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 环型</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 网状</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>网状拓扑有多个冗余路径，可靠性最高。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="A"><p class="quiz-question">2. 家庭网络通常使用哪种拓扑？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 星型</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 总线型</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 环型</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 网状</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>A</p><p><strong>解析：</strong>家庭网络通常使用星型拓扑，以路由器为中心。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="交换机,集线器"><p class="quiz-question">3. 星型拓扑的中心节点通常是______或______。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>交换机、集线器</p><p><strong>解析：</strong>星型拓扑的中心节点是交换机或集线器。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第1章</li><li>《计算机网络》谢希仁 第2章</li></ul></div>
+</body>
+</html>

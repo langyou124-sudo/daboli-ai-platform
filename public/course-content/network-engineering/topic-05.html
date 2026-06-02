@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理层传输介质</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题5：物理层传输介质</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>双绞线</dt><dd>由两根相互绝缘的铜导线按一定规则绞合在一起的传输介质，是最常见的网络线缆。绞合可以减少电磁干扰。</dd><dt>同轴电缆</dt><dd>由内导体、绝缘层、外导体和外护层组成的传输介质，抗干扰能力强，曾广泛用于有线电视和早期以太网。</dd><dt>光纤</dt><dd>利用光的全反射原理传输数据的介质，由纤芯和包层组成，传输速率极高，可达数百Gbps甚至Tbps。</dd><dt>单模光纤</dt><dd>纤芯直径约9μm的光纤，只允许一种光模式传播，传输距离可达几十公里，常用于城域网和广域网。</dd><dt>多模光纤</dt><dd>纤芯直径约50μm或62.5μm的光纤，允许多种光模式传播，传输距离较短（约2km），常用于局域网。</dd><dt>比特率</dt><dd>每秒传输的比特数，单位为bps（bits per second）。比如100Mbps表示每秒传输1亿个比特。</dd><dt>带宽</dt><dd>在计算机网络中通常指链路的最大数据传输速率，单位为bps。在通信领域中，带宽指信号频率范围，单位为Hz。</dd><dt>编码</dt><dd>将数字信号转换为适合在物理介质上传输的电信号或光信号的过程。不同的编码方式（如NRZ、曼彻斯特编码）有不同的优缺点。</dd></dl></div><h2>为什么要学传输介质？</h2>
+<p>在前面的课程中，我们已经了解了网络的分层架构。现在我们来到了最底层——<strong>物理层</strong>。物理层是整个网络通信的&quot;地基&quot;，它负责的就是一个最朴素的问题：<strong>怎么把0和1从A点传到B点？</strong></p>
+<p>你可能会觉得，这有什么好学的？不就是一根线吗？但事实上，选择什么样的&quot;线&quot;直接决定了你的网络能跑多快、能传多远、抗不抗干扰。就像修高速公路，你是铺柏油路还是水泥路，是两车道还是八车道，这些基础设施的选择，决定了上面能跑什么车、跑多快。</p>
+<h2>双绞线：无处不在的&quot;网线&quot;</h2>
+<p>你桌上那根连接电脑和路由器的线，大概率就是<strong>双绞线（Twisted Pair）</strong>。</p>
+<h3>为什么叫&quot;双绞&quot;？</h3>
+<p>双绞线由4对（8根）铜导线组成，每两根线按一定规则互相缠绕在一起。这个绞合不是为了好看——它是有物理原理的。当两根导线靠在一起并不断绞合时，外部电磁干扰对它们的影响几乎相同（这叫<strong>共模干扰</strong>），接收端可以通过差分信号把干扰抵消掉。</p>
+<h3>类比：两个人手拉手走路</h3>
+<p>想象你和朋友在嘈杂的街上走，周围很吵（外部干扰）。如果你们分开走，各自听到的噪音不一样，交流就很困难。但如果你们手拉手紧挨着走，听到的噪音几乎一样，反而能更清楚地感知彼此的信号差异。双绞线的绞合就是这个道理。</p>
+<h3>UTP和STP</h3>
+<ul>
+<li><strong>UTP（非屏蔽双绞线）</strong>：最常见的类型，你家和办公室的网线基本都是UTP。没有额外的屏蔽层，轻便便宜，适合一般环境。</li>
+<li><strong>STP（屏蔽双绞线）</strong>：在双绞线外面加了一层金属屏蔽层，抗干扰能力更强，适合工厂、机房等电磁环境复杂的场景。缺点是线缆更粗更硬，安装也更麻烦。</li>
+</ul>
+<h3>双绞线的分类</h3>
+<p>你可能听过&quot;超五类线&quot;&quot;六类线&quot;这样的说法，它们对应不同的标准：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>代号</th>
+<th>最大速率</th>
+<th>典型应用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>超五类</td>
+<td>Cat 5e</td>
+<td>1 Gbps</td>
+<td>家庭宽带、小型办公室</td>
+</tr>
+<tr>
+<td>六类</td>
+<td>Cat 6</td>
+<td>1 Gbps（10Gbps短距离）</td>
+<td>企业办公网</td>
+</tr>
+<tr>
+<td>超六类</td>
+<td>Cat 6a</td>
+<td>10 Gbps</td>
+<td>数据中心接入层</td>
+</tr>
+<tr>
+<td>七类</td>
+<td>Cat 7</td>
+<td>10 Gbps</td>
+<td>数据中心、高干扰环境</td>
+</tr>
+</tbody></table>
+<p><strong>关键限制</strong>：双绞线的有效传输距离一般不超过<strong>100米</strong>。超过这个距离，信号衰减会非常严重。如果你看到一栋大楼的网络布线，每隔几十米就会有一个交换机或配线架，就是因为这个距离限制。</p>
+<h2>同轴电缆：曾经的王者</h2>
+<p>**同轴电缆（Coaxial Cable）**在以太网发展的早期是主流传输介质。它的结构从内到外依次是：内导体（铜芯）→ 绝缘层 → 外导体（金属编织网）→ 外护层。</p>
+<h3>为什么叫&quot;同轴&quot;？</h3>
+<p>因为内部的铜芯和外部的金属编织网共享同一个中心轴线，所以叫&quot;同轴&quot;。外层的金属网既充当信号回路，又起到屏蔽作用，所以同轴电缆的抗干扰能力比普通双绞线强得多。</p>
+<h3>类比：水管</h3>
+<p>同轴电缆就像一根水管——中间是水流（信号），外面是管壁（屏蔽层）。水流在管壁的保护下不会外泄，外部的杂质也进不来。</p>
+<h3>为什么现在很少用了？</h3>
+<p>同轴电缆虽然抗干扰能力强，但有几个致命缺点：</p>
+<ul>
+<li><strong>安装不方便</strong>：线缆粗且硬，转弯半径大</li>
+<li><strong>单点故障</strong>：一个节点出问题，整条线路可能中断（总线型拓扑的痛点）</li>
+<li><strong>速率有限</strong>：早期的10Base-2和10Base-5标准，速率只有10Mbps</li>
+</ul>
+<p>现在同轴电缆主要用于**有线电视（CATV）**和一些老旧的网络环境中。在现代以太网中，双绞线和光纤已经基本取代了它。</p>
+<h2>光纤：速度的极限</h2>
+<p><strong>光纤（Optical Fiber）<strong>是目前最先进的传输介质，它不传电信号，而是传</strong>光信号</strong>。</p>
+<h3>工作原理</h3>
+<p>光纤由<strong>纤芯</strong>（高折射率的玻璃或塑料）和<strong>包层</strong>（低折射率材料）组成。当光线以特定角度射入纤芯时，会在纤芯和包层的界面上发生<strong>全反射</strong>，就像光线在纤芯里&quot;弹来弹去&quot;地前进，几乎不会有能量损失。</p>
+<h3>类比：在管道里弹射的光球</h3>
+<p>想象一个发光的球在一个光滑的管道里不断弹射前进——每碰到管壁就反射一次，一直沿着管道传播到另一端。光纤里的光信号就是这样传播的。</p>
+<h3>单模光纤 vs 多模光纤</h3>
+<p>光纤的&quot;模&quot;指的是光在纤芯中传播的路径模式：</p>
+<p><strong>多模光纤（Multi-Mode Fiber）</strong></p>
+<ul>
+<li>纤芯较粗（50μm或62.5μm）</li>
+<li>允许多种角度的光线同时传播</li>
+<li>由于不同角度的光走的路径长度不同，传远了会产生<strong>色散</strong>（信号变模糊）</li>
+<li>传输距离较短，一般不超过<strong>2公里</strong></li>
+<li>适合<strong>楼内布线、数据中心内部连接</strong></li>
+</ul>
+<p><strong>单模光纤（Single-Mode Fiber）</strong></p>
+<ul>
+<li>纤芯非常细（约9μm），只有一根头发丝的1/10</li>
+<li>只允许一种角度的光线传播，没有色散问题</li>
+<li>传输距离可以达到<strong>几十甚至上百公里</strong></li>
+<li>适合<strong>城域网、广域网、跨海通信</strong></li>
+<li>成本更高，需要激光光源</li>
+</ul>
+<h3>光纤的优势</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>光纤</th>
+<th>双绞线</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>传输速率</td>
+<td>可达100Gbps甚至更高</td>
+<td>一般1-10Gbps</td>
+</tr>
+<tr>
+<td>传输距离</td>
+<td>几十到上百公里</td>
+<td>最远100米</td>
+</tr>
+<tr>
+<td>抗电磁干扰</td>
+<td>完全免疫（传的是光）</td>
+<td>有一定抗干扰能力</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td>难以窃听（不辐射信号）</td>
+<td>较容易被窃听</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>较高</td>
+<td>较低</td>
+</tr>
+</tbody></table>
+<h2>无线传输介质：看不见的&quot;线&quot;</h2>
+<p>除了有线介质，现代网络还大量使用<strong>无线传输介质</strong>——电磁波在空气中传播，不需要物理线缆。</p>
+<h3>常见的无线传输方式</h3>
+<ul>
+<li><strong>Wi-Fi（IEEE 802.11）</strong>：工作在2.4GHz和5GHz频段，覆盖范围几十到上百米，是家庭和办公室最常见的无线接入方式。</li>
+<li><strong>蓝牙（Bluetooth）</strong>：短距离（通常10米内）、低功耗的无线通信，用于耳机、键盘、鼠标等外设。</li>
+<li><strong>蜂窝网络（4G/5G）</strong>：由运营商基站提供广域覆盖，5G的理论峰值速率可达20Gbps。</li>
+<li><strong>微波通信</strong>：点对点的高带宽无线连接，常用于两个建筑物之间的桥接。</li>
+</ul>
+<h3>无线 vs 有线</h3>
+<p>无线的优势在于<strong>移动性</strong>和<strong>部署便捷</strong>，但它的劣势也很明显：</p>
+<ul>
+<li><strong>带宽共享</strong>：同一个AP下的所有设备共享带宽</li>
+<li><strong>信号衰减</strong>：穿墙后信号大幅减弱</li>
+<li><strong>干扰严重</strong>：微波炉、蓝牙设备都会干扰Wi-Fi</li>
+<li><strong>安全性</strong>：无线信号在空气中传播，更容易被截获</li>
+</ul>
+<p>所以，在需要稳定、高速、安全连接的场景（如服务器机房、骨干网络），有线连接仍然是绝对的主力。</p>
+<h2>物理层的核心指标</h2>
+<p>不管你用什么介质，物理层都关心几个关键指标：</p>
+<p><strong>比特率（Bit Rate）</strong>：每秒能传输多少个比特，单位是bps。这是衡量传输速率的核心指标。100Mbps意味着每秒传输1亿个比特。</p>
+<p><strong>带宽（Bandwidth）</strong>：在计算机网络中，带宽通常和比特率同义，指链路的最大传输速率。但在通信领域，带宽指的是信号占用的频率范围，单位是Hz。这两个&quot;带宽&quot;不要混淆。</p>
+<p><strong>编码（Encoding）</strong>：数字设备内部处理的是0和1，但要在物理介质上传输，必须把这些0和1转换成电信号或光信号。不同的编码方式有不同的特点：</p>
+<ul>
+<li><strong>NRZ编码</strong>：高电平表示1，低电平表示0，简单但容易出现连续多个相同电平导致时钟失步</li>
+<li><strong>曼彻斯特编码</strong>：每个比特周期中间都有一次跳变，1是&quot;低→高&quot;，0是&quot;高→低&quot;，时钟同步性能好，早期以太网使用</li>
+</ul>
+<h2>本课小结</h2>
+<ul>
+<li><strong>双绞线</strong>是最常用的传输介质，分为UTP和STP，有效距离100米，适合局域网接入</li>
+<li><strong>同轴电缆</strong>抗干扰能力强但已逐渐退出网络领域，现在主要用于有线电视</li>
+<li><strong>光纤</strong>传输速率最高、距离最远、抗干扰最强，分为单模（远距离）和多模（短距离）</li>
+<li><strong>无线传输</strong>提供移动性和便捷性，但在带宽、稳定性和安全性上不如有线</li>
+<li>物理层的核心任务是将比特流从一端传到另一端，关键指标是比特率、带宽和编码方式</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="D"><p class="quiz-question">1. 以下哪种传输介质的抗电磁干扰能力最强？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> UTP双绞线</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> STP双绞线</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 同轴电缆</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 光纤</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>光纤传输的是光信号而非电信号，完全不受电磁干扰影响，抗干扰能力最强。STP和同轴电缆虽有屏蔽但仍受强电磁场影响。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. 双绞线的有效传输距离一般不超过多少米？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 50米</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 100米</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 500米</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 1000米</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>双绞线的有效传输距离一般不超过100米，这是以太网标准规定的最大距离。超过100米信号衰减严重，需要中继设备。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="全反射"><p class="quiz-question">3. 光纤利用________原理在纤芯中传播光信号。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>全反射</p><p><strong>解析：</strong>光纤利用光的全反射原理，光线在纤芯与包层的界面上不断反射，沿光纤传播到另一端。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">4. 关于单模光纤和多模光纤，以下说法正确的是？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 多模光纤传输距离更远</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> 单模光纤纤芯更细，传输距离更远</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 两者传输距离相同</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> 单模光纤成本更低</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>单模光纤纤芯约9μm，只允许一种光模式传播，无色散问题，传输距离可达几十公里。多模光纤纤芯较粗，存在色散，传输距离较短。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="绞合使两根导线受到的外部电磁干扰几乎相同（共模干扰），接收端通过差分信号可以将干扰抵消，从而提高抗干扰能力。"><p class="quiz-question">5. 为什么双绞线要将两根导线绞合在一起？请简要说明原理。</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>绞合使两根导线受到的外部电磁干扰几乎相同（共模干扰），接收端通过差分信号可以将干扰抵消，从而提高抗干扰能力。</p><p><strong>解析：</strong>双绞线的绞合是一种简单而有效的抗干扰设计，通过让两根线紧密缠绕，使得外部干扰对两根线的影响趋于一致。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第2章 - 物理层基础</li><li>《计算机网络》谢希仁 第2章 - 物理层</li><li>IEEE 802.3 - 以太网物理层标准</li></ul></div>
+</body>
+</html>

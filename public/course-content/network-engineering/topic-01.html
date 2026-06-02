@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算机网络概述</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>计算机网络概述</h1>
+<h2>开篇：你每天都在用网络，但你真的了解它吗？</h2>
+<p>早上醒来，你拿起手机刷微信——这是网络。打开电脑登录公司系统——这也是网络。甚至你家的智能音箱播放音乐，背后也是网络在工作。</p>
+<p>但你有没有想过：这些数据到底是怎么从一台设备跑到另一台设备的？为什么你在北京发一条消息，远在纽约的朋友几秒钟就能收到？</p>
+<p>这一课，我们从最基础的问题开始，一步步揭开计算机网络的面纱。</p>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>计算机网络</dt><dd>将多台计算机通过通信设备和传输介质连接起来，实现资源共享和信息传递的系统</dd><dt>资源共享</dt><dd>网络中的设备可以共用硬件（如打印机）、软件和数据（如文件），是网络存在的根本目的之一</dd><dt>数据通信</dt><dd>计算机之间传递信息的过程，如发邮件、发微信、浏览网页</dd><dt>LAN</dt><dd>局域网，覆盖几百米到几公里，如家庭Wi-Fi、办公室网络。速度快、延迟低</dd><dt>MAN</dt><dd>城域网，覆盖一个城市，如大学多校区互联、城市政务网</dd><dt>WAN</dt><dd>广域网，覆盖跨城市/跨国，互联网就是最大的广域网</dd><dt>路由器</dt><dd>连接不同网络的设备，根据IP地址决定数据往哪转发。你家里的路由器连接了局域网和互联网</dd><dt>交换机</dt><dd>局域网内根据MAC地址转发数据的设备，比集线器更智能</dd><dt>防火墙</dt><dd>网络安全设备，检查和过滤进出网络的数据包，挡住恶意攻击</dd></dl></div><h2>什么是计算机网络？</h2>
+<p>用一句话概括：<strong>计算机网络就是把多台计算机连接起来，让它们能互相通信、共享资源的系统。</strong></p>
+<p>这个定义看起来简单，但里面有三个关键词值得深入理解：</p>
+<p><strong>多台计算机</strong> — 网络至少需要两台设备。你一个人用电脑写文档，那不叫网络。但你把文件通过微信发给同事，这就涉及了两台设备之间的通信。</p>
+<p><strong>通信设备</strong> — 计算机之间不是直接连在一起的，中间有很多&quot;中转站&quot;。最典型的就是路由器——你家里那个闪着小灯的盒子，它就是连接你家设备和外部互联网的关键通信设备。</p>
+<p><strong>资源共享</strong> — 这是网络存在的根本目的。没有网络，你想打印文件得把U盘插到打印机上；有了网络，点一下&quot;打印&quot;就行了。打印机是共享的，文件传输也是共享的一种形式。</p>
+<blockquote>
+<p>网络的本质：让地理位置不同的设备，像在同一台机器上一样协作。</p>
+</blockquote>
+<h2>为什么需要网络？从一个故事说起</h2>
+<p>想象一下没有网络的世界：你想给朋友发一份文件，需要拷到U盘，走过去插到他电脑上，再粘贴。如果朋友在上海而你在深圳呢？你得快递U盘过去。</p>
+<p>有了网络，这一切变成了&quot;点击发送&quot;一个动作。</p>
+<p>计算机网络解决了三个核心问题：</p>
+<p><strong>第一，打破距离限制。</strong> 无论对方在隔壁房间还是地球另一端，数据传输几乎瞬间完成。</p>
+<p><strong>第二，共享昂贵资源。</strong> 一台高性能打印机几万块，不可能每人买一台。但通过网络，整个办公室共享一台就够了。</p>
+<p><strong>第三，协同工作。</strong> 一个人算不了的大数据，一百台机器一起算。这就是分布式处理——网络让多台计算机像一个团队一样协作。</p>
+<h2>网络的分类：从小到大的三个级别</h2>
+<p>网络不是只有一种。根据覆盖范围不同，网络分为三个级别，就像村子、城市和国家的区别。</p>
+<h3>LAN — 局域网</h3>
+<p><strong>覆盖范围：几百米到几公里</strong></p>
+<p>你家里就是一个典型的局域网。路由器连着你的手机、电脑、电视、智能音箱——这些设备都在同一个局域网里。它们之间传文件速度很快，因为距离近、线路短。</p>
+<p>公司办公室也是局域网。同事之间传文件、共享打印机，都是在局域网内完成的。</p>
+<blockquote>
+<p>特点：速度快（通常千兆甚至万兆）、延迟低（几毫秒）、自己就能搭建。</p>
+</blockquote>
+<h3>MAN — 城域网</h3>
+<p><strong>覆盖范围：一个城市</strong></p>
+<p>大学的多个校区互联，就是一个城域网。比如北京大学的本部和医学部，虽然相隔十几公里，但通过城域网连在一起，学生访问校内资源感觉就像在同一个校园。</p>
+<p>城市的政务网络、有线电视网络，也都是城域网。</p>
+<blockquote>
+<p>特点：覆盖一个城市，通常由电信运营商或大型机构运营。</p>
+</blockquote>
+<h3>WAN — 广域网</h3>
+<p><strong>覆盖范围：跨城市、跨国家</strong></p>
+<p>互联网就是最大的广域网。跨国公司的内部网络也是广域网——北京总部和纽约分部的员工能访问同一套系统。</p>
+<blockquote>
+<p>特点：覆盖范围最大，线路租用成本高，延迟相对较高。</p>
+</blockquote>
+<p>一个直观的理解方式：LAN是你家，MAN是你所在的城市，WAN是整个国家甚至全世界。</p>
+<h2>网络是怎么发展起来的？</h2>
+<p>计算机网络不是一夜之间出现的，它经历了几十年的演变。</p>
+<p><strong>1960年代：一切的起点</strong></p>
+<p>冷战时期，美国军方需要一个能抵御核打击的通信系统。传统的电话网络是中心化的——中心被炸，全网瘫痪。于是他们想出了一个办法：把网络做成&quot;去中心化&quot;的，任何一个节点被摧毁，其他节点还能通信。</p>
+<p>这就是ARPANET的诞生背景——1969年，只有4个节点，连接了加州大学洛杉矶分校、斯坦福研究所等四所机构。第一次发送的消息是&quot;LO&quot;——原本想发&quot;LOGIN&quot;，但系统在发到第二个字母时就崩溃了。</p>
+<p><strong>1970年代：分组交换的革命</strong></p>
+<p>早期的通信是&quot;电路交换&quot;——打电话时，整条线路被你独占。这很浪费。研究人员发明了&quot;分组交换&quot;：把数据切成小块（分组），每块独立传输，到达目的地后再拼起来。就像你把一封信撕成几片，每片走不同的路线到达收件人手中，最后拼回完整的信。</p>
+<p>这个思想至今仍是互联网的基础。</p>
+<p><strong>1980年代：标准统一</strong></p>
+<p>各种网络技术各自为战，互不兼容。1983年，TCP/IP协议成为ARPANET的标准——这一天被称为&quot;互联网的生日&quot;。从此，不同网络之间可以互相通信了。</p>
+<p><strong>1990年代至今：互联网爆发</strong></p>
+<p>1991年，蒂姆·伯纳斯-李发明了万维网（WWW），让普通人可以通过浏览器浏览网页。1995年，互联网开始商业化。之后的故事你都知道了——搜索引擎、社交媒体、移动互联网、5G、物联网……</p>
+<h2>互联网的基本架构</h2>
+<p>你可能觉得互联网很&quot;虚&quot;——看不见摸不着。但它其实有非常具体的物理结构。</p>
+<p>从你家到百度的服务器，数据要经过四层：</p>
+<p><strong>终端设备</strong> — 就是你的手机、电脑。它们是数据的起点和终点。</p>
+<p><strong>接入网</strong> — 把你的设备连到互联网的&quot;最后一公里&quot;。可能是光纤、4G/5G信号、或者家里的宽带猫。</p>
+<p><strong>核心网</strong> — 互联网的&quot;高速公路网&quot;。由大量高速路由器和光纤组成，负责把数据从一个城市传到另一个城市。你发的微信消息可能经过了十几个路由器才到达对方手机。</p>
+<p><strong>数据中心</strong> — 存放服务器的地方。百度、腾讯、阿里都有大型数据中心，里面是成千上万台服务器。你访问的网页、看的视频、存的文件，都存在这些服务器上。</p>
+<h2>关键设备：网络世界的&quot;交通设施&quot;</h2>
+<p>网络中有各种设备，每种设备扮演不同的角色。先有个大概印象就好，后面会详细讲。</p>
+<p><strong>集线器（Hub）</strong> 是最简单的设备，就像一个大喇叭——收到信号就向所有端口广播。效率低，现在基本淘汰了。</p>
+<p><strong>交换机（Switch）</strong> 比集线器聪明多了。它能记住每台设备的MAC地址（可以理解为设备的&quot;身份证号&quot;），只把数据发给目标设备。局域网里最常用的设备。</p>
+<p><strong>路由器（Router）</strong> 是连接不同网络的&quot;桥梁&quot;。你家的路由器连接了你家的局域网和外部互联网。它根据IP地址（可以理解为设备的&quot;邮寄地址&quot;）决定数据往哪里转发。</p>
+<p><strong>防火墙（Firewall）</strong> 是网络的&quot;保安&quot;。它检查进出的数据包，挡住恶意攻击和未授权的访问。</p>
+<h2>一个完整的例子：输入 baidu.com 后发生了什么？</h2>
+<p>这是经典的面试题，也是理解网络运作方式的绝佳案例。</p>
+<p><strong>第一步：DNS解析 — 查地址</strong></p>
+<p>浏览器不认识 baidu.com 这个名字，它需要一个数字地址（IP地址）。于是它问DNS服务器：&quot;baidu.com的IP是多少？&quot;DNS回答：&quot;110.242.68.66。&quot;就像你打电话前先查电话簿。</p>
+<p><strong>第二步：建立连接 — 拨号</strong></p>
+<p>浏览器向110.242.68.66发起TCP连接。这就像打电话：先拨号，对方接听，确认通话质量，然后才开始说话。这个过程叫&quot;三次握手&quot;，后面的课程会详细讲。</p>
+<p><strong>第三步：发送请求 — 说话</strong></p>
+<p>连接建立后，浏览器发一个HTTP请求：&quot;请给我首页的内容。&quot;就像你对电话那头说：&quot;请把文件发给我。&quot;</p>
+<p><strong>第四步：服务器响应 — 收到回复</strong></p>
+<p>百度服务器收到请求，把网页内容打包发回来。这些内容可能被切成了很多个小包，每个包走不同的路线到达你的电脑。</p>
+<p><strong>第五步：渲染页面 — 显示内容</strong></p>
+<p>浏览器收到所有数据包后，把它们拼装起来，解析HTML、CSS、JavaScript，最终显示出你看到的网页。</p>
+<blockquote>
+<p>整个过程通常只需要几百毫秒——比你眨一次眼还快。</p>
+</blockquote>
+<h2>本课小结</h2>
+<p>这一课我们从宏观角度认识了计算机网络：</p>
+<ul>
+<li><strong>网络的本质</strong>是让多台计算机互相通信、共享资源</li>
+<li><strong>按覆盖范围</strong>分为LAN（局域网）、MAN（城域网）、WAN（广域网）</li>
+<li><strong>互联网经历了</strong>从军事研究到全球基础设施的演变</li>
+<li><strong>网络架构</strong>分为终端、接入网、核心网、数据中心四层</li>
+<li><strong>关键设备</strong>包括集线器、交换机、路由器、防火墙</li>
+</ul>
+<p>这些概念现在只需要有个印象。随着后续课程的深入，每个知识点都会被展开来讲。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. 以下哪个是局域网的典型覆盖范围？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 一个国家</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 一个城市</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 一栋办公楼</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 全球</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>局域网（LAN）覆盖范围通常在几百米到几公里，如一栋办公楼或一个家庭。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. 互联网的前身是哪个网络？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> LAN</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> ARPANET</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> Ethernet</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> Token Ring</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>ARPANET是1969年诞生的，是互联网的前身。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">3. 以下哪个设备工作在网络层？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> 集线器</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> 交换机</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> 路由器</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> 网卡</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>路由器根据IP地址转发数据，工作在网络层（第3层）。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="资源共享,数据通信"><p class="quiz-question">4. 计算机网络的核心功能是______和______。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>资源共享、数据通信</p><p><strong>解析：</strong>计算机网络的两大核心功能是资源共享和数据通信。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="计算机网络让多台计算机可以共享资源（如打印机、文件）和传递信息（如邮件、微信），提高了效率和便利性。"><p class="quiz-question">5. 用你自己的话解释，为什么需要计算机网络？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>计算机网络让多台计算机可以共享资源（如打印机、文件）和传递信息（如邮件、微信），提高了效率和便利性。</p><p><strong>解析：</strong>开放性问题，核心是理解资源共享和数据通信的价值。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第1章</li><li>《网络是怎样连接的》前言</li><li>RFC 1122 - Requirements for Internet Hosts</li></ul></div>
+</body>
+</html>

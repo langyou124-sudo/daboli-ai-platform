@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI七层模型与TCP/IP四层模型</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>OSI七层模型与TCP/IP四层模型</h1>
+<h2>为什么需要分层？</h2>
+<p>想象你要寄一个包裹给远方的朋友。你需要：写好信的内容、装进信封、写上地址和邮编、交给快递公司、快递公司通过公路铁路运输。每一环都有自己的职责，互不干扰。</p>
+<p>计算机网络也是同样的道理。数据从你的电脑传到百度服务器，中间要经过很多步骤。把这些步骤分成&quot;层&quot;，每层只管自己的事，这就是<strong>网络分层模型</strong>。</p>
+<blockquote>
+<p>分层的核心思想：上层不需要知道下层是怎么实现的，只需要调用下层提供的服务。就像你寄快递不需要知道卡车怎么开，只需要把包裹交给快递员。</p>
+</blockquote>
+<p>分层的好处有三个：</p>
+<p><strong>第一，各司其职。</strong> 每层只负责自己的功能，不需要关心其他层的实现细节。应用层不需要知道数据是怎么通过光纤传输的，物理层也不需要知道数据是网页还是文件。</p>
+<p><strong>第二，便于标准化。</strong> 只要层与层之间的接口定义清楚，每层内部可以用不同技术实现。你可以把Wi-Fi换成5G，上层应用完全不受影响。</p>
+<p><strong>第三，便于排错。</strong> 网络出问题时，可以逐层排查——先看物理层是否连通，再看网络层IP对不对，再看传输层端口对不对。</p>
+<h2>OSI七层模型</h2>
+<p>OSI（Open Systems Interconnection）是国际标准化组织在1984年提出的理论模型，把网络通信从上到下分为七层。每一层都有明确的职责、对应的协议数据单元（PDU）和代表性协议。</p>
+<p>点击下面各层可以查看详细说明、核心概念和协议解释：</p>
+<Diagram type="osi-layers" /><p>记忆口诀：<strong>&quot;应表会传网数物&quot;</strong>，或英文 <strong>&quot;All People Seem To Need Data Processing&quot;</strong>。</p>
+<blockquote>
+<p>重要提示：OSI是理论模型，实际互联网用的是TCP/IP。但OSI的七层划分在教学、考试和网络排错中非常有用。面试问&quot;HTTP工作在哪一层？&quot;——答案是OSI的第7层应用层。</p>
+</blockquote>
+<h2>TCP/IP四层模型</h2>
+<p>OSI是理论参考，而TCP/IP才是互联网实际运行的标准。TCP/IP的设计哲学是&quot;先跑起来再说&quot;——先在ARPANET上实现，验证可行后再写成标准文档。</p>
+<Diagram type="tcpip-layers" /><p>TCP/IP把OSI的七层精简为四层：</p>
+<table>
+<thead>
+<tr>
+<th>层号</th>
+<th>层名</th>
+<th>对应OSI的哪些层</th>
+<th>典型协议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>4</td>
+<td>应用层</td>
+<td>应用层 + 表示层 + 会话层</td>
+<td>HTTP, DNS, FTP, SMTP, SSH</td>
+</tr>
+<tr>
+<td>3</td>
+<td>传输层</td>
+<td>传输层</td>
+<td>TCP, UDP</td>
+</tr>
+<tr>
+<td>2</td>
+<td>网际层</td>
+<td>网络层</td>
+<td>IP, ICMP, ARP, OSPF</td>
+</tr>
+<tr>
+<td>1</td>
+<td>网络接口层</td>
+<td>数据链路层 + 物理层</td>
+<td>Ethernet, Wi-Fi, PPP</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>为什么TCP/IP赢了？因为它先有实现后有标准——先在ARPANET上跑通了，再写成文档。OSI则是先写标准再实现，太慢了，错过了时机。而且TCP/IP是开放的、免费的，厂商可以自由实现。</p>
+</blockquote>
+<h2>两种模型对比</h2>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>OSI模型</th>
+<th>TCP/IP模型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>层数</td>
+<td>7层</td>
+<td>4层</td>
+</tr>
+<tr>
+<td>实际使用</td>
+<td>教学和理论参考</td>
+<td>互联网的实际标准</td>
+</tr>
+<tr>
+<td>设计理念</td>
+<td>先有标准后有实现</td>
+<td>先有实现后有标准</td>
+</tr>
+<tr>
+<td>通用性</td>
+<td>理论完善，层次清晰</td>
+<td>实用性强，广泛部署</td>
+</tr>
+<tr>
+<td>代表协议</td>
+<td>各层独立定义</td>
+<td>以TCP/IP为核心</td>
+</tr>
+</tbody></table>
+<p>实际工作中，你更多接触的是TCP/IP模型。但面试和考试中，OSI七层是必考内容。两者都要掌握——理解OSI有助于理解网络分层的思想，理解TCP/IP有助于理解互联网的实际运作。</p>
+<h2>数据封装：每一层都&quot;包装&quot;一次</h2>
+<p>当你发送数据时，每一层都会在数据上加上自己的&quot;头部信息&quot;，就像俄罗斯套娃一样一层层包裹：</p>
+<Diagram type="encapsulation" /><p>这个过程叫<strong>封装（Encapsulation）</strong>。反过来，接收方收到数据后逐层拆开头部，叫<strong>解封装（Decapsulation）</strong>。</p>
+<blockquote>
+<p>封装的关键意义：每层只需要关心自己的头部信息，不需要理解其他层的内容。这就是分层的威力。</p>
+</blockquote>
+<h2>本课小结</h2>
+<ul>
+<li><strong>分层的好处</strong>：各司其职、便于标准化、便于排错</li>
+<li><strong>OSI七层</strong>：应用层→表示层→会话层→传输层→网络层→数据链路层→物理层</li>
+<li><strong>TCP/IP四层</strong>：应用层→传输层→网际层→网络接口层</li>
+<li><strong>两种模型关系</strong>：OSI是理论参考，TCP/IP是实际标准</li>
+<li><strong>封装过程</strong>：数据从上到下逐层加头部，从下到上逐层拆头部</li>
+</ul>
+<p>掌握这两个模型是学习网络的第一步。后面每个知识点都会对应到具体的层，所以务必把七层四层的结构和每层的代表协议记牢。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="D"><p class="quiz-question">1. OSI模型共有几层？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 4层</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 5层</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 6层</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 7层</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>OSI模型有7层：应用层、表示层、会话层、传输层、网络层、数据链路层、物理层。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">2. HTTP协议工作在OSI模型的哪一层？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> 传输层</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> 网络层</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> 应用层</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> 数据链路层</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>HTTP是应用层协议，用于Web浏览器和服务器之间的通信。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="传输层"><p class="quiz-question">3. TCP/IP模型分为4层：应用层、______、网际层和网络接口层。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>传输层</p><p><strong>解析：</strong>TCP/IP四层模型：应用层、传输层、网际层、网络接口层。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">4. 数据封装时，TCP头部加在哪一层？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 应用层</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> 传输层</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 网络层</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> 数据链路层</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>TCP头部在传输层添加，形成Segment（段）。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第2章</li><li>《计算机网络：自顶向下方法》第1章</li><li>ISO/IEC 7498-1 - OSI Reference Model</li></ul></div>
+</body>
+</html>

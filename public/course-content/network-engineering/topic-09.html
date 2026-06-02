@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IP地址与子网划分</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题9：IP地址与子网划分</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>IPv4地址</dt><dd>互联网协议第4版定义的网络地址，长度为32位（4字节），通常用点分十进制表示，如192.168.1.1。</dd><dt>子网掩码</dt><dd>用于区分IP地址中网络部分和主机部分的32位掩码，与IP地址进行按位与运算可得到网络地址。</dd><dt>网络地址</dt><dd>IP地址中主机位全为0的地址，用于标识一个网络段，如192.168.1.0。不能分配给主机使用。</dd><dt>广播地址</dt><dd>IP地址中主机位全为1的地址，用于向该网络段内所有主机发送数据，如192.168.1.255。</dd><dt>私有地址</dt><dd>RFC 1918定义的保留地址段，不能在互联网上路由，只能在局域网内使用。包括10.0.0.0/8、172.16.0.0/12、192.168.0.0/16。</dd><dt>环回地址</dt><dd>127.0.0.1，用于本机测试。发送到这个地址的数据包不会离开本机，常用于测试本机网络协议栈是否正常。</dd><dt>A类地址</dt><dd>第一个字节范围1-126的IP地址，默认掩码255.0.0.0。前8位为网络号，后24位为主机号，适合大型网络。</dd><dt>B类地址</dt><dd>第一个字节范围128-191的IP地址，默认掩码255.255.0.0。前16位为网络号，后16位为主机号，适合中型网络。</dd><dt>C类地址</dt><dd>第一个字节范围192-223的IP地址，默认掩码255.255.255.0。前24位为网络号，后8位为主机号，适合小型网络。</dd></dl></div><h2>为什么需要IP地址？</h2>
+<p>上一模块我们学了MAC地址——它是网卡的硬件标识，出厂就固定了。但MAC地址有一个问题：它只在本地网络内有意义。就像你知道一个人的身份证号，但你不能用身份证号来寄快递——你需要的是邮政地址。</p>
+<p><strong>IP地址</strong>就是网络世界的&quot;邮政地址&quot;。它是一种<strong>逻辑地址</strong>，由网络管理员或DHCP服务器分配，可以根据网络结构灵活变化。路由器根据IP地址来决定数据包应该往哪里转发。</p>
+<h2>IPv4地址的结构</h2>
+<p>IPv4地址是一个<strong>32位</strong>的二进制数，通常用<strong>点分十进制</strong>表示：每8位（1个字节）转换成十进数，用点号分隔。</p>
+<p>例如：11000000 10101000 00000001 00000001 → 192.168.1.1</p>
+<p>一个IPv4地址分为两部分：</p>
+<ul>
+<li><strong>网络号</strong>：标识设备所在的网络（类似城市名）</li>
+<li><strong>主机号</strong>：标识网络中的具体设备（类似门牌号）</li>
+</ul>
+<p>问题来了：网络号和主机号各占多少位？这就需要<strong>子网掩码</strong>来确定。</p>
+<h2>子网掩码：划分网络和主机的&quot;尺子&quot;</h2>
+<p><strong>子网掩码</strong>也是一个32位的数，用点分十进制表示。它的作用就是告诉设备：IP地址的前多少位是网络号，后多少位是主机号。</p>
+<p>子网掩码的规则很简单：<strong>连续的1代表网络位，连续的0代表主机位</strong>。</p>
+<p>例如：255.255.255.0 = 11111111.11111111.11111111.00000000</p>
+<p>这意味着前24位是网络号，后8位是主机号。</p>
+<h3>计算方法</h3>
+<p>把IP地址和子网掩码进行<strong>按位与运算</strong>，就能得到网络地址：</p>
+<p>192.168.1.100 AND 255.255.255.0 = 192.168.1.0（网络地址）</p>
+<p>主机位全为0的地址就是<strong>网络地址</strong>（192.168.1.0），主机位全为1的地址就是<strong>广播地址</strong>（192.168.1.255）。这两个地址不能分配给主机使用。</p>
+<p>所以对于192.168.1.0/24这个网络，可用的IP地址是192.168.1.1到192.168.1.254，共254个。</p>
+<h2>IP地址的分类</h2>
+<p>早期互联网采用<strong>分类编址</strong>方案，将IP地址分为5类：</p>
+<h3>A类地址</h3>
+<p>第一个字节的范围：1 ~ 126
+默认掩码：255.0.0.0（/8）
+网络号占8位，主机号占24位
+每个A类网络可容纳约1677万台主机
+用途：超大型网络，如国家级ISP</p>
+<h3>B类地址</h3>
+<p>第一个字节的范围：128 ~ 191
+默认掩码：255.255.0.0（/16）
+网络号占16位，主机号占16位
+每个B类网络可容纳约6.5万台主机
+用途：中型企业、大学校园网</p>
+<h3>C类地址</h3>
+<p>第一个字节的范围：192 ~ 223
+默认掩码：255.255.255.0（/24）
+网络号占24位，主机号占8位
+每个C类网络可容纳254台主机
+用途：小型办公室、家庭网络</p>
+<h3>D类和E类</h3>
+<p>D类（224<del>239）用于组播，E类（240</del>255）保留用于实验。</p>
+<h3>分类编址的问题</h3>
+<p>分类编址看起来整齐，但实际使用中浪费严重。比如一个公司有300台主机，需要B类地址（6.5万个），但实际只用了300个，浪费了99.5%的地址。这就是后来CIDR出现的原因。</p>
+<h2>特殊IP地址</h2>
+<p>有些IP地址有特殊含义，不能分配给主机：</p>
+<ul>
+<li>127.0.0.1：环回地址，用于本机测试。ping 127.0.0.1能通说明你的网络协议栈正常</li>
+<li>0.0.0.0：表示&quot;本网络&quot;或&quot;任意地址&quot;</li>
+<li>255.255.255.255：受限广播地址，只在本地网络传播</li>
+</ul>
+<h2>私有地址</h2>
+<p>RFC 1918定义了三段<strong>私有地址</strong>，只能在局域网内使用，不能在互联网上路由：</p>
+<ul>
+<li>A类：10.0.0.0 ~ 10.255.255.255（10.0.0.0/8）</li>
+<li>B类：172.16.0.0 ~ 172.31.255.255（172.16.0.0/12）</li>
+<li>C类：192.168.0.0 ~ 192.168.255.255（192.168.0.0/16）</li>
+</ul>
+<p>你家路由器分配给电脑的192.168.x.x就是私有地址。要访问互联网，需要通过**NAT（网络地址转换）**将私有地址转换为公网地址。</p>
+<h2>子网划分</h2>
+<p>一个大网络可以划分为多个小网络（子网），方法是<strong>向主机位借位</strong>作为子网位。</p>
+<h3>举例</h3>
+<p>公司有一个C类网络192.168.1.0/24，需要划分成4个子网给4个部门。</p>
+<p>借2位主机位（2的2次方=4），子网掩码变为255.255.255.192（/26）。</p>
+<p>划分结果：</p>
+<ul>
+<li>子网1：192.168.1.0/26（可用IP：1~62，共62个）</li>
+<li>子网2：192.168.1.64/26（可用IP：65~126）</li>
+<li>子网3：192.168.1.128/26（可用IP：129~190）</li>
+<li>子网4：192.168.1.192/26（可用IP：193~254）</li>
+</ul>
+<p>每个子网62台主机，比原来的254个少了很多，但如果每个部门不需要那么多主机，这种划分就更高效。</p>
+<h2>本课小结</h2>
+<ul>
+<li>IPv4地址是32位逻辑地址，用点分十进制表示，分为网络号和主机号</li>
+<li>子网掩码用于区分网络位和主机位，与IP做按位与运算得到网络地址</li>
+<li>ABC类地址根据第一个字节范围划分，分别适合大中小型网络</li>
+<li>私有地址（10.x/172.16~31.x/192.168.x）只能在局域网内使用</li>
+<li>子网划分通过借用主机位来实现，可以将大网络分成多个小网络</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. IP地址192.168.1.100属于哪类地址？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> A类</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> B类</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> C类</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> D类</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>192.168.1.100的第一个字节是192，在192-223范围内，属于C类地址。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="/24"><p class="quiz-question">2. 子网掩码255.255.255.0用CIDR表示法写作________。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>/24</p><p><strong>解析：</strong>255.255.255.0转换为二进制是11111111.11111111.11111111.00000000，前24位是1，所以写作/24。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">3. 以下哪个是私有IP地址？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> 8.8.8.8</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> 172.20.1.1</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> 11.0.0.1</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> 203.0.113.1</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>172.20.1.1属于172.16.0.0/12私有地址段（172.16.0.0~172.31.255.255）。8.8.8.8是Google公共DNS，11和203都不是私有地址段。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">4. 一个/26的子网中，可用的主机IP地址有多少个？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 64</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> 62</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 126</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> 254</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>/26表示主机位有32-26=6位，2的6次方=64个地址，减去网络地址和广播地址，可用62个。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="子网掩码用于区分IP地址中的网络部分和主机部分。将IP地址与子网掩码进行按位与运算，即可得到网络地址。例如192.168.1.100 AND 255.255.255.0 = 192.168.1.0。"><p class="quiz-question">5. 请解释子网掩码的作用，并说明如何通过子网掩码计算网络地址。</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>子网掩码用于区分IP地址中的网络部分和主机部分。将IP地址与子网掩码进行按位与运算，即可得到网络地址。例如192.168.1.100 AND 255.255.255.0 = 192.168.1.0。</p><p><strong>解析：</strong>子网掩码中连续的1对应网络位，连续的0对应主机位。按位与运算的结果就是把主机位全部清零，得到网络地址。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第3章 - IP地址</li><li>《计算机网络》谢希仁 第4章 - 网络层</li><li>RFC 1918 - Address Allocation for Private Internets</li><li>RFC 4632 - Classless Inter-Domain Routing (CIDR)</li></ul></div>
+</body>
+</html>

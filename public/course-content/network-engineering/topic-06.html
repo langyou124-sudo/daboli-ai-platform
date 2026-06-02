@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>以太网帧结构</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题6：以太网帧结构</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>以太网</dt><dd>目前最主流的局域网技术标准，由IEEE 802.3定义。它规定了物理层和数据链路层的MAC子层标准。</dd><dt>帧</dt><dd>数据链路层的协议数据单元（PDU），是网络中传输的基本数据块，包含目的地址、源地址、数据和校验信息。</dd><dt>前导码</dt><dd>帧开头的7个字节（10101010...），用于让接收方的时钟与发送方同步，就像跑步比赛前的倒计时。</dd><dt>帧起始定界符</dt><dd>紧跟前导码的1字节（10101011），最后两位为11，告诉接收方：同步完成，帧的实际内容从下一个字节开始。</dd><dt>MAC地址</dt><dd>网络接口卡（NIC）的唯一硬件标识，长度为48位（6字节），通常写成如 AA:BB:CC:DD:EE:FF 的格式。</dd><dt>类型字段</dt><dd>以太网帧中标识上层协议类型的字段，如0x0800表示IPv4，0x0806表示ARP，0x86DD表示IPv6。</dd><dt>FCS</dt><dd>帧校验序列，位于帧尾部的4字节CRC校验码，用于检测帧在传输过程中是否发生了比特错误。</dd><dt>MTU</dt><dd>最大传输单元，以太网的MTU为1500字节，表示帧中数据部分的最大长度。超过MTU的数据需要分片传输。</dd></dl></div><h2>为什么要学帧结构？</h2>
+<p>上一课我们知道了物理层负责传输比特流，但比特流只是一堆0和1，接收方怎么知道一个完整的数据块从哪里开始、到哪里结束？怎么知道这个数据是发给谁的？怎么判断数据有没有在传输中出错？</p>
+<p>这些问题都需要<strong>数据链路层</strong>来解决。数据链路层把上层传下来的数据封装成<strong>帧（Frame）</strong>，就像把一封信装进信封——信封上写着收件人地址、寄件人地址，信封里是信的内容，封口处还有防拆标记。以太网帧就是这个&quot;信封&quot;。</p>
+<h2>以太网的历史：从2.94Mbps到100Gbps</h2>
+<p>以太网（Ethernet）诞生于1973年，由施乐公司的Robert Metcalfe发明。最初的以太网只有2.94Mbps的速率，使用同轴电缆。后来IEEE以以太网为基础制定了<strong>IEEE 802.3</strong>标准，经过几十年的演进，速率从10Mbps、100Mbps、1Gbps一路发展到今天的10Gbps、40Gbps、100Gbps甚至更高。</p>
+<p>现在全世界的局域网几乎都是以太网，可以说它是局域网技术的事实标准。</p>
+<h2>Ethernet II帧格式</h2>
+<p>目前最常用的以太网帧格式是<strong>Ethernet II</strong>（也叫DIX帧），由DEC、Intel和Xerox三家公司联合制定。一个完整的Ethernet II帧由以下部分组成：</p>
+<h3>帧的结构</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>长度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>前导码（Preamble）</td>
+<td>7字节</td>
+<td>交替的1和10101010...，用于时钟同步</td>
+</tr>
+<tr>
+<td>帧起始定界符（SFD）</td>
+<td>1字节</td>
+<td>10101011，标记帧内容即将开始</td>
+</tr>
+<tr>
+<td>目的MAC地址</td>
+<td>6字节</td>
+<td>接收方的网卡地址</td>
+</tr>
+<tr>
+<td>源MAC地址</td>
+<td>6字节</td>
+<td>发送方的网卡地址</td>
+</tr>
+<tr>
+<td>类型（EtherType）</td>
+<td>2字节</td>
+<td>上层协议类型标识</td>
+</tr>
+<tr>
+<td>数据（Payload）</td>
+<td>46-1500字节</td>
+<td>实际要传输的数据</td>
+</tr>
+<tr>
+<td>FCS</td>
+<td>4字节</td>
+<td>CRC校验码</td>
+</tr>
+</tbody></table>
+<h3>逐字段详解</h3>
+<p><strong>前导码 + SFD（共8字节）</strong></p>
+<p>这是帧的&quot;热身&quot;阶段。接收方的网卡需要和发送方保持时钟同步才能正确读取比特流，就像两个合唱团需要先对准节拍一样。前导码的7个字节都是交替的10101010，这种规律性的信号让接收方的时钟能够锁定发送方的节奏。</p>
+<p>SFD的最后一个字节是10101011，注意最后两位是<strong>11</strong>而不是10，这个微妙的变化告诉接收方：同步结束，后面就是真正的帧内容了。</p>
+<p><strong>目的MAC地址和源MAC地址（各6字节）</strong></p>
+<p>这是帧的&quot;收件人&quot;和&quot;寄件人&quot;。MAC地址是48位（6字节）的硬件地址，通常写成如 00:1A:2B:3C:4D:5E 的格式。</p>
+<p>有一个细节：MAC地址的第一个字节的最低位用来区分<strong>单播</strong>和<strong>多播</strong>：</p>
+<ul>
+<li>最低位为0 → 单播（发给一个特定设备）</li>
+<li>最低位为1 → 多播（发给一组设备）</li>
+</ul>
+<p>另外，如果目的MAC地址是 FF:FF:FF:FF:FF:FF，这就是<strong>广播地址</strong>，表示发给局域网内的所有设备。</p>
+<p><strong>类型字段/EtherType（2字节）</strong></p>
+<p>这个字段告诉接收方：帧里面的数据应该交给哪个上层协议处理。常见的类型值：</p>
+<table>
+<thead>
+<tr>
+<th>类型值</th>
+<th>协议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x0800</td>
+<td>IPv4</td>
+</tr>
+<tr>
+<td>0x0806</td>
+<td>ARP</td>
+</tr>
+<tr>
+<td>0x86DD</td>
+<td>IPv6</td>
+</tr>
+</tbody></table>
+<p>你可以把这个字段想象成快递包裹上写的&quot;内附：文件/食品/电子产品&quot;，让收件人知道该怎么处理。</p>
+<p><strong>数据字段（46-1500字节）</strong></p>
+<p>这是帧的&quot;正文&quot;，存放上层协议传下来的数据。以太网规定：</p>
+<ul>
+<li><strong>最小长度</strong>：46字节（不够要填充）</li>
+<li><strong>最大长度</strong>：1500字节（这就是MTU）</li>
+</ul>
+<p>为什么要设最小长度？这和**冲突检测（CSMA/CD）**机制有关——帧必须足够长，才能在发送完毕之前检测到是否发生了冲突。虽然现代交换式以太网已经很少使用CSMA/CD，但这个限制保留了下来。</p>
+<p>如果上层数据超过1500字节怎么办？那就需要在上层进行<strong>分片</strong>，把大数据块拆成多个帧来传输。</p>
+<p><strong>FCS——帧校验序列（4字节）</strong></p>
+<p>FCS使用<strong>CRC-32</strong>算法，发送方对帧的内容（从目的MAC到数据字段）计算一个32位的校验码，放在帧尾。接收方收到帧后用同样的算法再算一遍，如果结果和FCS不一致，说明帧在传输过程中出了错，接收方会直接丢弃这个帧。</p>
+<h2>IEEE 802.3帧格式</h2>
+<p>除了Ethernet II，还有IEEE 802.3定义的帧格式。两者的主要区别在于：Ethernet II用2字节的<strong>类型字段</strong>标识上层协议，而802.3用2字节的<strong>长度字段</strong>标识数据部分的长度。</p>
+<p>在实际应用中，Ethernet II帧更为常见。现在的以太网设备通常两种格式都支持，而且通过字段值的范围可以自动区分：类型字段值大于等于1536（0x0600）就是Ethernet II，小于1536就是802.3。</p>
+<h2>帧的传输过程</h2>
+<p>当一台电脑要发送数据时，整个过程是这样的：</p>
+<ol>
+<li><strong>封装</strong>：数据链路层从网络层拿到数据包，加上MAC头部（目的MAC、源MAC、类型）和FCS尾部，封装成帧</li>
+<li><strong>发送</strong>：物理层把帧转换成比特流，通过线缆发送出去</li>
+<li><strong>接收</strong>：接收方的物理层收到比特流，还原成帧</li>
+<li><strong>校验</strong>：数据链路层检查FCS，如果校验失败就丢弃</li>
+<li><strong>解封装</strong>：去掉MAC头部和尾部，把数据部分交给上层协议</li>
+</ol>
+<h2>本课小结</h2>
+<ul>
+<li>以太网是目前最主流的局域网技术，由IEEE 802.3标准定义</li>
+<li>数据链路层将数据封装成<strong>帧</strong>进行传输，帧是数据链路层的PDU</li>
+<li>Ethernet II帧由前导码、SFD、目的MAC、源MAC、类型、数据、FCS组成</li>
+<li><strong>前导码和SFD</strong>用于时钟同步和帧起始标记</li>
+<li><strong>MAC地址</strong>是48位的硬件唯一标识</li>
+<li><strong>类型字段</strong>标识上层协议（0x0800=IPv4，0x0806=ARP）</li>
+<li><strong>FCS</strong>使用CRC-32校验，检测传输错误</li>
+<li>以太网帧数据部分最小46字节，最大1500字节（MTU）</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. 以太网帧中，哪个字段用于标识上层协议类型？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 前导码</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> MAC地址</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 类型字段（EtherType）</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> FCS</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>类型字段（EtherType）占2字节，用于标识帧中数据应该交给哪个上层协议处理，如0x0800表示IPv4，0x0806表示ARP。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="1500"><p class="quiz-question">2. 以太网帧数据部分的最大长度为________字节，这个值称为MTU。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>1500</p><p><strong>解析：</strong>以太网的MTU（最大传输单元）为1500字节，超过这个长度的数据需要在上层进行分片传输。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="C"><p class="quiz-question">3. 以太网帧的FCS字段使用什么算法来检测传输错误？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A"> <strong>A.</strong> MD5</label><label class="quiz-option"><input type="radio" name="q2" value="B"> <strong>B.</strong> SHA-1</label><label class="quiz-option"><input type="radio" name="q2" value="C"> <strong>C.</strong> CRC-32</label><label class="quiz-option"><input type="radio" name="q2" value="D"> <strong>D.</strong> AES</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>FCS使用CRC-32算法计算校验码。发送方计算后附加在帧尾，接收方重新计算并比对，不一致则丢弃帧。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">4. 以太网帧中前导码的作用是什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> 标识帧的结束</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> 让接收方时钟与发送方同步</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> 标识帧属于哪个VLAN</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> 加密帧内容</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>前导码是7个字节的交替10101010模式，用于让接收方的时钟与发送方同步，就像跑步比赛前的倒计时。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="最小长度为46字节。这是为了配合CSMA/CD冲突检测机制，确保帧足够长，使得发送方在发送完毕之前能检测到是否发生冲突。"><p class="quiz-question">5. 以太网帧数据部分的最小长度是多少？为什么要有最小长度限制？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>最小长度为46字节。这是为了配合CSMA/CD冲突检测机制，确保帧足够长，使得发送方在发送完毕之前能检测到是否发生冲突。</p><p><strong>解析：</strong>虽然现代交换式以太网已很少使用CSMA/CD，但最小帧长限制保留了下来，这也是以太网兼容性设计的体现。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第2章 - 以太网</li><li>《计算机网络》谢希仁 第3章 - 数据链路层</li><li>RFC 894 - A Standard for the Transmission of IP Datagrams over Ethernet Networks</li><li>IEEE 802.3 - CSMA/CD Access Method</li></ul></div>
+</body>
+</html>

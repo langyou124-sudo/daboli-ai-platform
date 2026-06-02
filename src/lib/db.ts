@@ -212,6 +212,29 @@ async function seedData() {
           }
         }
       }
+
+      // Network engineering course with materials
+      const netEngSections = [
+        { title: '网络基础', topics: ['topic-01','topic-02','topic-03','topic-04'], titles: ['计算机网络概述','OSI七层模型与TCP/IP四层模型','数据封装与解封装','网络拓扑结构'] },
+        { title: '物理层与数据链路层', topics: ['topic-05','topic-06','topic-07','topic-08'], titles: ['物理层传输介质','以太网帧结构','MAC地址与ARP协议','VLAN与交换机工作原理'] },
+        { title: '网络层', topics: ['topic-09','topic-10','topic-11','topic-12','topic-13'], titles: ['IP地址与子网划分','CIDR与VLSM','IP数据包格式','ICMP协议','路由基础与路由表'] },
+        { title: '传输层', topics: ['topic-14','topic-15','topic-16','topic-17'], titles: ['TCP协议与三次握手','TCP流量控制与拥塞控制','UDP协议','端口号与套接字'] },
+        { title: '应用层', topics: ['topic-18','topic-19','topic-20','topic-21','topic-22'], titles: ['DNS域名系统','HTTP/HTTPS协议','DHCP协议','FTP/TFTP文件传输','SMTP/POP3/IMAP邮件协议'] },
+      ];
+      const netEngResult = await db.prepare(
+        "INSERT INTO courses (title, description, category, grade_range, hours, price, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      ).run('网络工程基础', '系统学习网络工程核心知识，涵盖网络基础、物理层与数据链路层、网络层、传输层、应用层等10大模块，共22个课题。', 'high', '高中/大学', 48, 0, 'published', 99);
+      const netEngId = netEngResult.lastInsertRowid as number;
+      if (netEngId) {
+        for (let si = 0; si < netEngSections.length; si++) {
+          const sec = netEngSections[si];
+          const secResult = await db.prepare('INSERT INTO course_sections (course_id, title, sort_order) VALUES (?, ?, ?)').run(netEngId, sec.title, si + 1);
+          const secId = secResult.lastInsertRowid as number;
+          for (let mi = 0; mi < sec.topics.length; mi++) {
+            await db.prepare('INSERT INTO course_materials (section_id, title, type, file_path, sort_order) VALUES (?, ?, ?, ?, ?)').run(secId, sec.titles[mi], 'document', `/course-content/network-engineering/${sec.topics[mi]}.html`, mi + 1);
+          }
+        }
+      }
     }
   } catch {}
 }

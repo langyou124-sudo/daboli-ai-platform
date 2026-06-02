@@ -8,16 +8,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
 
-  const order = await db.prepare(
-    'SELECT id FROM orders WHERE user_id = ? AND course_id = ? AND status = ?'
-  ).get(session.userId, id, 'paid');
-
-  if (!order && session.role !== 'admin') {
-    return NextResponse.json({ error: '请先购买课程' }, { status: 403 });
-  }
-
-  const course = await db.prepare('SELECT * FROM courses WHERE id = ?').get(id);
+  const course = await db.prepare('SELECT * FROM courses WHERE id = ?').get(id) as any;
   if (!course) return NextResponse.json({ error: '课程不存在' }, { status: 404 });
+
+  // Free courses (price=0) don't need an order
+  if (course.price > 0) {
+    const order = await db.prepare(
+      'SELECT id FROM orders WHERE user_id = ? AND course_id = ? AND status = ?'
+    ).get(session.userId, id, 'paid');
+
+    if (!order && session.role !== 'admin') {
+      return NextResponse.json({ error: '请先购买课程' }, { status: 403 });
+    }
+  }
 
   const sections = await db.prepare(
     'SELECT * FROM course_sections WHERE course_id = ? ORDER BY sort_order ASC'

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP/HTTPS协议</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>HTTP/HTTPS协议</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>HTTP</dt><dd>超文本传输协议，用于Web浏览器与服务器之间传输网页数据</dd><dt>HTTPS</dt><dd>安全超文本传输协议，在HTTP基础上加入TLS加密</dd><dt>GET</dt><dd>HTTP请求方法，用于获取资源</dd><dt>POST</dt><dd>HTTP请求方法，用于提交数据</dd><dt>状态码</dt><dd>HTTP响应中表示请求结果的三位数字代码</dd><dt>TLS</dt><dd>传输层安全协议，为HTTPS提供加密和身份验证</dd><dt>HTTP/2</dt><dd>HTTP协议的第二个主要版本，支持多路复用和头部压缩</dd><dt>HTTP/3</dt><dd>HTTP协议的第三个主要版本，基于QUIC协议，使用UDP传输</dd></dl></div><h2>引入：Web的基础协议</h2>
+<p>当你打开浏览器访问一个网站时，浏览器和服务器之间是如何通信的？网页、图片、CSS样式表、JavaScript脚本这些资源是如何从服务器传送到你的电脑上的？</p>
+<p>HTTP（HyperText Transfer Protocol，超文本传输协议）就是支撑万维网（World Wide Web）的基础协议。它定义了浏览器（客户端）和服务器之间如何交换数据。你每天浏览网页、观看视频、使用Web应用，都在使用HTTP协议。</p>
+<h2>HTTP的工作原理</h2>
+<p>HTTP是一个请求-响应协议。客户端（通常是浏览器）发送一个请求，服务器返回一个响应。每个请求-响应对都是独立的——HTTP是无状态的协议，服务器不会记住之前的请求。</p>
+<p>一个HTTP请求包含：</p>
+<ul>
+<li>请求行：包含请求方法、URL和HTTP版本。例如：GET /index.html HTTP/1.1</li>
+<li>请求头：包含各种元信息，如Host、User-Agent、Accept等</li>
+<li>空行：分隔头部和正文</li>
+<li>请求体：可选，POST请求通常包含要提交的数据</li>
+</ul>
+<p>一个HTTP响应包含：</p>
+<ul>
+<li>状态行：包含HTTP版本、状态码和状态描述。例如：HTTP/1.1 200 OK</li>
+<li>响应头：包含Content-Type、Content-Length等信息</li>
+<li>空行：分隔头部和正文</li>
+<li>响应体：服务器返回的数据（HTML页面、图片、JSON等）</li>
+</ul>
+<h2>HTTP请求方法</h2>
+<p>HTTP定义了多种请求方法，最常用的有：</p>
+<p>GET：获取资源。这是最常见的方法，用于获取网页、图片等资源。GET请求的参数放在URL中（查询字符串）。</p>
+<p>POST：提交数据。用于向服务器提交表单数据、上传文件等。POST请求的数据放在请求体中。</p>
+<p>PUT：更新资源。用于更新服务器上的资源。如果资源不存在，可以创建新的资源。</p>
+<p>DELETE：删除资源。用于删除服务器上的资源。</p>
+<p>PATCH：部分更新资源。与PUT不同，PATCH只更新资源的部分内容。</p>
+<p>HEAD：与GET类似，但只返回响应头，不返回响应体。用于获取资源的元信息。</p>
+<p>OPTIONS：获取服务器支持的请求方法。常用于CORS（跨域资源共享）预检请求。</p>
+<h2>HTTP状态码</h2>
+<p>HTTP状态码是一个三位数字，表示请求的结果。状态码分为五类：</p>
+<p>1xx（信息性）：表示请求已被接收，继续处理。</p>
+<ul>
+<li>100 Continue：服务器已收到请求头，客户端可以继续发送请求体。</li>
+</ul>
+<p>2xx（成功）：表示请求已成功处理。</p>
+<ul>
+<li>200 OK：请求成功。</li>
+<li>201 Created：资源创建成功（常用于POST请求）。</li>
+<li>204 No Content：请求成功，但没有返回内容。</li>
+</ul>
+<p>3xx（重定向）：表示需要进一步操作才能完成请求。</p>
+<ul>
+<li>301 Moved Permanently：资源已永久移动到新位置。</li>
+<li>302 Found：资源临时移动到新位置。</li>
+<li>304 Not Modified：资源未修改，可以使用缓存。</li>
+</ul>
+<p>4xx（客户端错误）：表示请求有误。</p>
+<ul>
+<li>400 Bad Request：请求格式错误。</li>
+<li>401 Unauthorized：需要身份验证。</li>
+<li>403 Forbidden：服务器拒绝请求。</li>
+<li>404 Not Found：资源不存在。</li>
+<li>405 Method Not Allowed：请求方法不被允许。</li>
+</ul>
+<p>5xx（服务器错误）：表示服务器处理请求时出错。</p>
+<ul>
+<li>500 Internal Server Error：服务器内部错误。</li>
+<li>502 Bad Gateway：网关错误。</li>
+<li>503 Service Unavailable：服务不可用。</li>
+</ul>
+<h2>HTTP头部字段</h2>
+<p>HTTP头部字段用于传递请求和响应的附加信息。常见的头部字段包括：</p>
+<p>通用头部：</p>
+<ul>
+<li>Date：消息发送的日期和时间</li>
+<li>Connection：连接管理（keep-alive表示保持连接）</li>
+<li>Cache-Control：缓存控制策略</li>
+</ul>
+<p>请求头部：</p>
+<ul>
+<li>Host：目标主机名（HTTP/1.1必须）</li>
+<li>User-Agent：客户端软件信息</li>
+<li>Accept：客户端可接受的内容类型</li>
+<li>Cookie：客户端存储的Cookie</li>
+</ul>
+<p>响应头部：</p>
+<ul>
+<li>Content-Type：响应内容的类型（如text/html、application/json）</li>
+<li>Content-Length：响应内容的长度</li>
+<li>Set-Server：设置Cookie</li>
+<li>Server：服务器软件信息</li>
+</ul>
+<h2>HTTPS工作原理</h2>
+<p>HTTP是明文传输的，这意味着数据在传输过程中可能被窃听或篡改。HTTPS（HTTP Secure）通过在HTTP和TCP之间加入TLS（Transport Layer Security，传输层安全）协议来解决这个问题。</p>
+<p>HTTPS提供的安全保证：</p>
+<ul>
+<li>加密：数据在传输过程中被加密，防止被窃听。</li>
+<li>身份验证：通过数字证书验证服务器的身份，防止中间人攻击。</li>
+<li>完整性：数据在传输过程中不能被篡改。</li>
+</ul>
+<p>TLS握手过程：</p>
+<ol>
+<li>客户端发送Client Hello，包含支持的TLS版本和加密套件列表</li>
+<li>服务器回复Server Hello，选择加密套件，并发送数字证书</li>
+<li>客户端验证证书的有效性（是否由受信任的CA签发、是否过期、域名是否匹配）</li>
+<li>客户端生成随机数，用服务器的公钥加密后发送</li>
+<li>双方使用这个随机数生成会话密钥</li>
+<li>后续通信使用对称加密（会话密钥）进行，因为对称加密比非对称加密快得多</li>
+</ol>
+<h2>HTTP/2</h2>
+<p>HTTP/1.1存在一些性能问题：</p>
+<ul>
+<li>队头阻塞：同一个连接上的请求必须按顺序处理，前面的请求会阻塞后面的请求。</li>
+<li>每个域名限制6个连接：浏览器对同一个域名最多建立6个TCP连接。</li>
+<li>头部重复传输：每个请求都携带完整的头部信息，浪费带宽。</li>
+</ul>
+<p>HTTP/2的主要改进：</p>
+<ul>
+<li>多路复用：在同一个TCP连接上可以同时传输多个请求和响应，解决了队头阻塞问题。</li>
+<li>头部压缩：使用HPACK算法压缩头部，减少传输的数据量。</li>
+<li>服务器推送：服务器可以主动向客户端推送资源，而不必等待客户端请求。</li>
+<li>二进制分帧：将数据分成更小的二进制帧进行传输，提高解析效率。</li>
+</ul>
+<h2>HTTP/3</h2>
+<p>HTTP/2虽然解决了应用层的队头阻塞，但TCP层的队头阻塞仍然存在——如果一个TCP包丢失了，所有流都会被阻塞。HTTP/3通过使用QUIC协议（基于UDP）来解决这个问题。</p>
+<p>HTTP/3的主要改进：</p>
+<ul>
+<li>基于UDP：使用QUIC协议代替TCP，避免了TCP的队头阻塞。</li>
+<li>0-RTT连接建立：对于之前访问过的服务器，可以在第一个请求中就携带数据，实现零延迟连接。</li>
+<li>内置加密：QUIC协议内置了TLS 1.3，不再需要单独的TLS握手。</li>
+<li>连接迁移：当网络切换时（如从Wi-Fi切换到4G），连接可以保持不中断。</li>
+</ul>
+<h2>总结</h2>
+<p>HTTP是Web的基础协议，定义了浏览器和服务器之间的通信规则。HTTPS通过TLS加密保证了通信安全。HTTP/2通过多路复用和头部压缩提高了性能。HTTP/3基于QUIC协议，进一步解决了队头阻塞和连接建立延迟的问题。</p>
+<p>理解HTTP协议对于Web开发和网络运维都至关重要。无论是排查网页加载缓慢的问题，还是配置Web服务器，都需要对HTTP有深入的理解。</p>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="C"><p class="quiz-question">1. HTTP状态码404表示什么？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 服务器内部错误</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 请求成功</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 资源未找到</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 需要身份验证</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>C</p><p><strong>解析：</strong>404 Not Found表示客户端请求的资源在服务器上不存在。这是最常见的HTTP错误状态码之一。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. HTTPS在HTTP和TCP之间加入了什么协议来保证安全？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> SSL</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> TLS</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> IPSec</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> SSH</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>HTTPS通过在HTTP和TCP之间加入TLS（Transport Layer Security，传输层安全）协议来提供加密、身份验证和完整性保证。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="POST"><p class="quiz-question">3. HTTP请求方法中，用于向服务器提交数据的方法是_____。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>POST</p><p><strong>解析：</strong>POST方法用于向服务器提交数据，如表单数据、文件上传等。数据放在请求体中传输。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="主要改进包括：1）多路复用，在同一连接上并行传输多个请求；2）头部压缩，减少重复数据传输；3）服务器推送，服务器可主动推送资源；4）二进制分帧，提高传输效率。"><p class="quiz-question">4. HTTP/2相比HTTP/1.1有哪些主要改进？</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>主要改进包括：1）多路复用，在同一连接上并行传输多个请求；2）头部压缩，减少重复数据传输；3）服务器推送，服务器可主动推送资源；4）二进制分帧，提高传输效率。</p><p><strong>解析：</strong>HTTP/2的核心改进是多路复用，它解决了HTTP/1.1的队头阻塞问题，大大提高了Web页面的加载速度。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">5. HTTP/3使用什么协议代替TCP？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A"> <strong>A.</strong> UDP</label><label class="quiz-option"><input type="radio" name="q4" value="B"> <strong>B.</strong> QUIC</label><label class="quiz-option"><input type="radio" name="q4" value="C"> <strong>C.</strong> SCTP</label><label class="quiz-option"><input type="radio" name="q4" value="D"> <strong>D.</strong> DCCP</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>HTTP/3使用QUIC协议，QUIC基于UDP但提供了可靠传输、流量控制等功能，同时解决了TCP的队头阻塞问题。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解HTTP》</li><li>RFC 9110 - HTTP Semantics</li><li>RFC 9113 - HTTP/2</li></ul></div>
+</body>
+</html>

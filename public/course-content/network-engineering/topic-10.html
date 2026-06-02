@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIDR与VLSM</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 2rem; line-height: 1.8; color: #1a1a1a; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+h2 { font-size: 1.4rem; margin-top: 2rem; color: #1e40af; }
+h3 { font-size: 1.2rem; margin-top: 1.5rem; }
+p { margin: 0.8rem 0; }
+ul, ol { margin: 0.8rem 0; padding-left: 1.5rem; }
+li { margin: 0.3rem 0; }
+strong { color: #1e3a5f; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d1d5db; padding: 0.5rem 0.8rem; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+.glossary-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+.glossary-card h4 { margin: 0 0 0.8rem; color: #1e40af; font-size: 1.1rem; }
+.glossary-card dl { margin: 0; }
+.glossary-card dt { font-weight: 700; color: #1e3a5f; margin-top: 0.6rem; }
+.glossary-card dd { margin: 0.2rem 0 0 1rem; color: #374151; }
+.quiz-section { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 2rem 0; border-radius: 0 8px 8px 0; }
+.quiz-section h2 { color: #166534; margin-top: 0; }
+.quiz-item { margin: 1.2rem 0; padding: 1rem; background: #fff; border-radius: 6px; border: 1px solid #e5e7eb; }
+.quiz-question { font-weight: 600; margin-bottom: 0.5rem; }
+.quiz-options label { display: block; padding: 0.3rem 0.5rem; margin: 0.2rem 0; border-radius: 4px; cursor: pointer; }
+.quiz-options label:hover { background: #f3f4f6; }
+.quiz-input { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 200px; }
+.quiz-textarea { padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.quiz-answer { background: #fefce8; border: 1px solid #fbbf24; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
+.quiz-check-btn { margin-top: 0.5rem; padding: 0.4rem 1rem; background: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.quiz-check-btn:hover { background: #2563eb; }
+code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; color: inherit; }
+</style>
+</head>
+<body>
+<h1>课题10：CIDR与VLSM</h1>
+<div class="glossary-card"><h4>核心术语</h4><dl><dt>CIDR</dt><dd>无类域间路由，打破了传统ABC类地址的限制，用前缀长度灵活表示网络大小，如192.168.1.0/24。</dd><dt>前缀长度</dt><dd>CIDR表示法中斜杠后面的数字，表示网络部分占多少位。如/24表示前24位是网络号，后8位是主机号。</dd><dt>VLSM</dt><dd>可变长子网掩码，允许在同一网络中使用不同长度的子网掩码，根据不同子网的需求灵活分配IP地址。</dd><dt>路由聚合</dt><dd>将多条连续的路由合并为一条更大的路由条目，减少路由表大小。如将4个/24合并为一个/22。也叫路由汇总。</dd><dt>超网</dt><dd>将多个小网络合并为一个大网络的技术，是CIDR的核心思想。与子网划分相反，超网是把网络变大。</dd><dt>可用主机数</dt><dd>一个子网中能分配给设备的IP地址数量，等于2的主机位次方减2（减去网络地址和广播地址）。</dd><dt>地址块</dt><dd>CIDR分配的一段连续IP地址，用起始地址和前缀长度表示。如203.0.113.0/24就是一个包含256个地址的地址块。</dd><dt>子网划分</dt><dd>将一个大网络划分为多个小网络的技术，通过借用主机位作为子网位来实现，可以提高IP地址利用率和网络管理效率。</dd></dl></div><h2>分类编址的困境</h2>
+<p>上一课我们学了ABC类地址。分类编址看似整齐，但有一个致命问题：<strong>地址浪费严重</strong>。</p>
+<p>想象一个公司需要500个IP地址。C类只有254个不够用，只能申请B类——但B类有6.5万个地址，只用500个，浪费了99%以上。全世界B类地址只有约1.6万个，如果每个公司都这么申请，很快就会耗尽。</p>
+<p>1993年，**CIDR（无类域间路由）**被提出，彻底打破了ABC类的限制。</p>
+<h2>CIDR：不再分类的灵活编址</h2>
+<p>CIDR的核心思想很简单：<strong>用前缀长度来灵活定义网络大小，而不是固定分成ABC三类</strong>。</p>
+<h3>CIDR表示法</h3>
+<p>CIDR用&quot;IP地址/前缀长度&quot;来表示一个网络，例如 192.168.1.0/24。</p>
+<p>斜杠后面的数字（前缀长度）表示网络号占多少位：</p>
+<ul>
+<li>/24 = 前24位是网络号，后8位是主机号，共256个地址</li>
+<li>/25 = 前25位是网络号，后7位是主机号，共128个地址</li>
+<li>/16 = 前16位是网络号，后16位是主机号，共65536个地址</li>
+</ul>
+<h3>灵活分配</h3>
+<p>回到刚才的例子：公司需要500个IP地址。用CIDR可以申请一个/23的地址块（512个地址），刚好够用，不多不少。</p>
+<ul>
+<li>申请 203.0.112.0/23</li>
+<li>前缀长度23，主机位9位，可用地址 2^9 - 2 = 510个</li>
+<li>比申请整个B类（6.5万个）高效得多</li>
+</ul>
+<h3>子网掩码与前缀长度的对应</h3>
+<p>前缀长度和子网掩码是同一件事的两种表示方式：</p>
+<table>
+<thead>
+<tr>
+<th>前缀长度</th>
+<th>子网掩码</th>
+<th>可用主机数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>/8</td>
+<td>255.0.0.0</td>
+<td>16,777,214</td>
+</tr>
+<tr>
+<td>/16</td>
+<td>255.255.0.0</td>
+<td>65,534</td>
+</tr>
+<tr>
+<td>/24</td>
+<td>255.255.255.0</td>
+<td>254</td>
+</tr>
+<tr>
+<td>/25</td>
+<td>255.255.255.128</td>
+<td>126</td>
+</tr>
+<tr>
+<td>/26</td>
+<td>255.255.255.192</td>
+<td>62</td>
+</tr>
+<tr>
+<td>/27</td>
+<td>255.255.255.224</td>
+<td>30</td>
+</tr>
+<tr>
+<td>/28</td>
+<td>255.255.255.240</td>
+<td>14</td>
+</tr>
+<tr>
+<td>/30</td>
+<td>255.255.255.252</td>
+<td>2</td>
+</tr>
+</tbody></table>
+<p>/30特别重要——它只有2个可用地址，刚好够连接两个路由器的点对点链路。</p>
+<h2>VLSM：不同子网不同大小</h2>
+<p>CIDR解决了&quot;从ISP申请多大的地址块&quot;的问题。但拿到地址块后，公司内部怎么划分？如果每个子网都一样大小，还是会有浪费——市场部100人和财务部20人，为什么要分一样大的子网？</p>
+<p><strong>VLSM（可变长子网掩码）<strong>允许在同一个网络中使用</strong>不同长度的子网掩码</strong>。</p>
+<h3>实例</h3>
+<p>公司拿到了192.168.1.0/24的网络，需要分配给4个部门：</p>
+<table>
+<thead>
+<tr>
+<th>部门</th>
+<th>需要主机数</th>
+<th>分配子网</th>
+<th>掩码</th>
+<th>可用地址</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>研发部</td>
+<td>100台</td>
+<td>192.168.1.0/25</td>
+<td>255.255.255.128</td>
+<td>126个</td>
+</tr>
+<tr>
+<td>市场部</td>
+<td>50台</td>
+<td>192.168.1.128/26</td>
+<td>255.255.255.192</td>
+<td>62个</td>
+</tr>
+<tr>
+<td>财务部</td>
+<td>20台</td>
+<td>192.168.1.192/27</td>
+<td>255.255.255.224</td>
+<td>30个</td>
+</tr>
+<tr>
+<td>点对点链路</td>
+<td>2台</td>
+<td>192.168.1.224/30</td>
+<td>255.255.255.252</td>
+<td>2个</td>
+</tr>
+</tbody></table>
+<p>如果没有VLSM，所有子网必须一样大。要满足研发部100台的需求，每个子网至少要/25（126个），4个子网需要504个地址，一个/24根本不够。</p>
+<p>有了VLSM，按需分配，一个/24就够用了。</p>
+<h2>路由聚合：减小路由表</h2>
+<p>互联网上有几十万条路由，如果每条都单独记录，路由表会非常庞大，查询效率极低。</p>
+<p><strong>路由聚合</strong>（也叫路由汇总）把多条连续的路由合并为一条：</p>
+<ul>
+<li>192.168.0.0/24</li>
+<li>192.168.1.0/24</li>
+<li>192.168.2.0/24</li>
+<li>192.168.3.0/24</li>
+</ul>
+<p>这4条可以合并为 <strong>192.168.0.0/22</strong>（一个/22包含4个/24）。</p>
+<p>这样路由器只需要记1条路由而不是4条，大大减小了路由表的规模。这是互联网能够高效运转的关键技术之一。</p>
+<h2>本课小结</h2>
+<ul>
+<li><strong>CIDR</strong>打破了ABC类地址的限制，用前缀长度灵活定义网络大小</li>
+<li>CIDR表示法：IP/前缀长度，如192.168.1.0/24</li>
+<li><strong>VLSM</strong>允许在同一网络中使用不同长度的子网掩码，按需分配地址</li>
+<li><strong>路由聚合</strong>将多条连续路由合并为一条，减小路由表规模</li>
+<li>可用主机数 = 2^(主机位) - 2，减去网络地址和广播地址</li>
+</ul>
+<div class="quiz-section"><h2>练习题</h2><div class="quiz-item" data-answer="D"><p class="quiz-question">1. CIDR地址10.0.0.0/10的可用主机地址有多少个？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q0" value="A"> <strong>A.</strong> 1024</label><label class="quiz-option"><input type="radio" name="q0" value="B"> <strong>B.</strong> 1022</label><label class="quiz-option"><input type="radio" name="q0" value="C"> <strong>C.</strong> 4194304</label><label class="quiz-option"><input type="radio" name="q0" value="D"> <strong>D.</strong> 4194302</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>D</p><p><strong>解析：</strong>/10表示主机位有32-10=22位，2的22次方=4194304，减去网络地址和广播地址=4194302个。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">2. 以下关于VLSM的说法，正确的是？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A"> <strong>A.</strong> VLSM要求所有子网掩码长度相同</label><label class="quiz-option"><input type="radio" name="q1" value="B"> <strong>B.</strong> VLSM允许在同一网络中使用不同长度的子网掩码</label><label class="quiz-option"><input type="radio" name="q1" value="C"> <strong>C.</strong> VLSM只适用于A类地址</label><label class="quiz-option"><input type="radio" name="q1" value="D"> <strong>D.</strong> VLSM会增加路由表大小</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>VLSM（可变长子网掩码）的核心就是允许在同一网络中为不同子网分配不同大小的地址空间，提高IP地址利用率。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="/22"><p class="quiz-question">3. 将4个连续的/24网络聚合为一个更大的网络，聚合后的前缀长度是________。</p><input type="text" class="quiz-input" placeholder="请输入答案"><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>/22</p><p><strong>解析：</strong>4个/24可以聚合为1个/22。4=2的2次方，所以前缀长度减少2位，从24变为22。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="B"><p class="quiz-question">4. 路由器连接两个网络使用点对点链路，最适合使用哪个前缀长度？</p><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"> <strong>A.</strong> /24</label><label class="quiz-option"><input type="radio" name="q3" value="B"> <strong>B.</strong> /30</label><label class="quiz-option"><input type="radio" name="q3" value="C"> <strong>C.</strong> /32</label><label class="quiz-option"><input type="radio" name="q3" value="D"> <strong>D.</strong> /16</label></div><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>B</p><p><strong>解析：</strong>/30有2个可用地址，刚好分配给点对点链路两端的路由器接口，是点对点链路的标准选择。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div><div class="quiz-item" data-answer="CIDR允许按需申请地址块大小，而分类编址只能按固定的ABC类申请。例如需要500个地址，CIDR可以申请/23（512个），而分类编址只能申请B类（6.5万个），浪费99%以上。"><p class="quiz-question">5. 为什么CIDR比传统的分类编址更高效？请举例说明。</p><textarea class="quiz-textarea" placeholder="请输入你的答案" rows="3"></textarea><div class="quiz-answer" style="display:none"><p><strong>答案：</strong>CIDR允许按需申请地址块大小，而分类编址只能按固定的ABC类申请。例如需要500个地址，CIDR可以申请/23（512个），而分类编址只能申请B类（6.5万个），浪费99%以上。</p><p><strong>解析：</strong>CIDR的灵活性大大提高了IP地址的利用率，延缓了IPv4地址耗尽的速度。</p></div><button class="quiz-check-btn" onclick="this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent==='查看答案'?'隐藏答案':'查看答案'">查看答案</button></div></div><div class="references"><h2>参考资料</h2><ul><li>《图解TCP/IP》第3章 - CIDR</li><li>《计算机网络》谢希仁 第4章 - 划分子网和构造超网</li><li>RFC 4632 - Classless Inter-Domain Routing (CIDR)</li><li>RFC 1519 - CIDR and VLSM</li></ul></div>
+</body>
+</html>
