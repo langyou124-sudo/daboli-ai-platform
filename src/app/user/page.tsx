@@ -9,16 +9,20 @@ export default function UserCenterPage() {
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [progress, setProgress] = useState<any[]>([]);
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ phone: '', school: '' });
+  const [rechargeAmount, setRechargeAmount] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/auth/me').then(r => r.ok ? r.json() : null),
       fetch('/api/orders').then(r => r.ok ? r.json() : null),
-    ]).then(([userData, orderData]) => {
+      fetch('/api/user/balance').then(r => r.ok ? r.json() : null),
+    ]).then(([userData, orderData, balData]) => {
       if (!userData) {
         router.push('/login');
         return;
@@ -26,6 +30,8 @@ export default function UserCenterPage() {
       setUser(userData.user);
       setEditForm({ phone: userData.user.phone || '', school: userData.user.school || '' });
       setOrders(orderData?.orders || []);
+      setBalance(balData?.balance || 0);
+      setTransactions(balData?.transactions || []);
 
       // Fetch progress for paid courses
       const paidOrders = (orderData?.orders || []).filter((o: any) => o.status === 'paid');
@@ -57,6 +63,27 @@ export default function UserCenterPage() {
     });
     if (res.ok) {
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o));
+    }
+  };
+
+  const handleRecharge = async () => {
+    const amount = Number(rechargeAmount);
+    if (!amount || amount <= 0) return;
+    const res = await fetch('/api/user/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setBalance(data.balance);
+      setRechargeAmount('');
+      // Refresh transactions
+      const balRes = await fetch('/api/user/balance');
+      const balData = await balRes.json();
+      setTransactions(balData.transactions || []);
+    } else {
+      alert(data.error || '充值失败');
     }
   };
 
@@ -146,7 +173,11 @@ export default function UserCenterPage() {
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl shadow-sm p-5">
+                    <div className="text-sm text-gray-500 mb-1">账户余额</div>
+                    <div className="text-2xl font-bold text-emerald-600">¥{balance.toFixed(2)}</div>
+                  </div>
                   <div className="bg-white rounded-xl shadow-sm p-5">
                     <div className="text-sm text-gray-500 mb-1">已购课程</div>
                     <div className="text-2xl font-bold text-blue-600">{paidOrders.length}</div>
@@ -285,7 +316,49 @@ export default function UserCenterPage() {
 
             {/* Profile Tab */}
             {activeTab === 'profile' && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="space-y-6">
+                {/* Balance & Recharge */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-lg font-semibold mb-4">账户余额</h2>
+                  <div className="flex items-center gap-6 mb-6">
+                    <div className="text-3xl font-bold text-emerald-600">¥{balance.toFixed(2)}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      placeholder="充值金额"
+                      value={rechargeAmount}
+                      onChange={e => setRechargeAmount(e.target.value)}
+                      className="border rounded-lg px-3 py-2 w-40"
+                      min="1"
+                    />
+                    <button onClick={handleRecharge} className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700">
+                      充值
+                    </button>
+                    <span className="text-xs text-gray-400">开发测试阶段可自主充值</span>
+                  </div>
+                  {transactions.length > 0 && (
+                    <div className="mt-6 pt-4 border-t">
+                      <h3 className="text-sm font-medium text-gray-500 mb-3">交易记录</h3>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {transactions.map((t: any) => (
+                          <div key={t.id} className="flex items-center justify-between text-sm py-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-2 h-2 rounded-full ${t.amount > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-gray-600">{t.description}</span>
+                            </div>
+                            <span className={t.amount > 0 ? 'text-green-600' : 'text-red-600'}>
+                              {t.amount > 0 ? '+' : ''}{t.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Account Settings */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold">账户设置</h2>
                   {!editing && (
@@ -334,6 +407,7 @@ export default function UserCenterPage() {
                     <button onClick={() => setEditing(false)} className="border px-6 py-2 rounded-lg hover:bg-gray-50">取消</button>
                   </div>
                 )}
+                </div>
               </div>
             )}
           </div>

@@ -73,7 +73,7 @@ await db.exec(`
     title TEXT NOT NULL,
     description TEXT,
     content TEXT,
-    category TEXT NOT NULL CHECK(category IN ('primary', 'middle', 'high', 'teacher', 'camp')),
+    category TEXT NOT NULL CHECK(category IN ('primary', 'middle', 'high', 'network', 'teacher', 'camp')),
     grade_range TEXT,
     hours INTEGER,
     price REAL DEFAULT 0,
@@ -152,17 +152,31 @@ await db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (material_id) REFERENCES course_materials(id)
   );
+
+  CREATE TABLE IF NOT EXISTS balance_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('recharge', 'purchase', 'refund')),
+    description TEXT,
+    related_order_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
 `);
 
 // Seed data
 async function seedData() {
+  // Add balance column if missing (existing DBs)
+  try { await db.prepare('ALTER TABLE users ADD COLUMN balance REAL DEFAULT 0').run(); } catch {}
+
   try {
     const admin = await db.prepare('SELECT id FROM users WHERE role = ?').get('admin');
     if (!admin) {
       const hashedPassword = bcrypt.hashSync('admin123', 10);
       await db.prepare(
-        'INSERT OR IGNORE INTO users (username, email, password, role) VALUES (?, ?, ?, ?)'
-      ).run('admin', 'admin@daboli.com', hashedPassword, 'admin');
+        'INSERT OR IGNORE INTO users (username, email, password, role, balance) VALUES (?, ?, ?, ?, ?)'
+      ).run('admin', 'admin@daboli.com', hashedPassword, 'admin', 99999);
     }
   } catch {}
 

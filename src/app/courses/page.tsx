@@ -32,15 +32,21 @@ export default function CoursesPage() {
     fetch(url).then(r => r.json()).then(d => setCourses(d.courses || []));
   }, [activeCategory]);
 
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => { if (d) setUser(d.user); });
+  }, []);
+
   const handleBuy = async (courseId: number) => {
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: courseId }),
-    });
+    if (!user) { window.location.href = '/login'; return; }
+    const res = await fetch(`/api/courses/${courseId}/purchase`, { method: 'POST' });
     const data = await res.json();
     if (res.ok) {
-      alert('订单已创建！请前往个人中心完成支付。');
+      window.location.href = `/courses/${courseId}/learn`;
+    } else if (res.status === 402) {
+      alert(`余额不足！当前余额 ¥${data.balance}，课程价格 ¥${data.price}。请先充值。`);
+      window.location.href = '/user';
     } else {
       alert(data.error || '操作失败');
     }

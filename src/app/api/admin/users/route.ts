@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
 
-  const users = await db.prepare('SELECT id, username, email, role, phone, school, created_at FROM users ORDER BY created_at DESC').all();
+  const users = await db.prepare('SELECT id, username, email, role, phone, school, balance, created_at FROM users ORDER BY created_at DESC').all();
   return NextResponse.json({ users });
 }
 

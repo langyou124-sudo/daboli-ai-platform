@@ -51,14 +51,17 @@ export default function CourseOverviewPage() {
       router.push('/login');
       return;
     }
-    const res = await fetch('/api/orders', {
+    const res = await fetch(`/api/courses/${courseId}/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: Number(courseId) }),
     });
     const data = await res.json();
     if (res.ok) {
-      alert('订单已创建！请前往个人中心完成支付。');
+      setHasPaid(true);
+      setShowPaywall(false);
+      router.push(`/courses/${courseId}/learn`);
+    } else if (res.status === 402) {
+      alert(`余额不足！当前余额 ¥${data.balance}，课程价格 ¥${data.price}。请先充值。`);
       router.push('/user');
     } else {
       alert(data.error || '操作失败');
