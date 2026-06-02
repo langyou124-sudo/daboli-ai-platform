@@ -3,9 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 
-// Ensure data directory exists for local dev
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
+// Vercel: use /tmp (ephemeral but writable). Local: use project data/ dir
+const isVercel = !!process.env.VERCEL;
+const dataDir = isVercel ? '/tmp' : path.join(process.cwd(), 'data');
+if (!isVercel && !fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
