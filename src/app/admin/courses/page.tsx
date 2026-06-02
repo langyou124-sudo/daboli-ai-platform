@@ -59,7 +59,7 @@ export default function AdminCoursesPage() {
   };
 
   const categoryLabel: Record<string, string> = {
-    primary: 'AI启蒙', middle: 'AI基础', high: 'AI进阶', teacher: '师资培训', camp: '夏令营',
+    primary: 'AI启蒙', middle: 'AI基础', high: 'AI进阶', network: '网络工程', teacher: '师资培训', camp: '夏令营',
   };
 
   return (
@@ -86,6 +86,7 @@ export default function AdminCoursesPage() {
                   <option value="primary">AI启蒙</option>
                   <option value="middle">AI基础</option>
                   <option value="high">AI进阶</option>
+                  <option value="network">网络工程</option>
                   <option value="teacher">师资培训</option>
                   <option value="camp">夏令营</option>
                 </select>

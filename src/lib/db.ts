@@ -224,7 +224,7 @@ async function seedData() {
       ];
       const netEngResult = await db.prepare(
         "INSERT INTO courses (title, description, category, grade_range, hours, price, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-      ).run('网络工程基础', '系统学习网络工程核心知识，涵盖网络基础、物理层与数据链路层、网络层、传输层、应用层等10大模块，共22个课题。', 'high', '高中/大学', 48, 0, 'published', 99);
+      ).run('网络工程基础', '系统学习网络工程核心知识，涵盖网络基础、物理层与数据链路层、网络层、传输层、应用层等10大模块，共22个课题。', 'network', '高中/大学', 48, 0, 'published', 99);
       const netEngId = netEngResult.lastInsertRowid as number;
       if (netEngId) {
         for (let si = 0; si < netEngSections.length; si++) {

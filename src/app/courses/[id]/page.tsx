@@ -39,7 +39,7 @@ export default function CourseOverviewPage() {
       router.push('/login');
       return;
     }
-    if (hasPaid) {
+    if (hasPaid || course?.price === 0) {
       router.push(`/courses/${courseId}/learn`);
     } else {
       setShowPaywall(true);
@@ -71,7 +71,7 @@ export default function CourseOverviewPage() {
   const totalMaterials = sections.reduce((sum: number, s: any) => sum + (s.materials?.length || 0), 0);
 
   const categoryLabel: Record<string, string> = {
-    primary: 'AI启蒙', middle: 'AI基础', high: 'AI进阶', teacher: '师资培训', camp: '夏令营',
+    primary: 'AI启蒙', middle: 'AI基础', high: 'AI进阶', network: '网络工程', teacher: '师资培训', camp: '夏令营',
   };
 
   return (
@@ -90,7 +90,7 @@ export default function CourseOverviewPage() {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-orange-300">¥{course.price}</div>
-              {hasPaid ? (
+              {hasPaid || course.price === 0 ? (
                 <Link href={`/courses/${courseId}/learn`} className="inline-block mt-3 bg-green-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-600">
                   开始学习
                 </Link>

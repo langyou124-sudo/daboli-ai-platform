@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFallbackCourseDetail, FALLBACK_COURSES } from '@/lib/fallback-data';
+import { getFallbackCourseDetail, FALLBACK_COURSES, FALLBACK_SECTIONS } from '@/lib/fallback-data';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,9 +9,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { default: db } = await import('@/lib/db');
     const course = await db.prepare('SELECT * FROM courses WHERE id = ?').get(id) as any;
     if (course) {
-      const sections = await db.prepare(
+      let sections = await db.prepare(
         'SELECT id, title, sort_order FROM course_sections WHERE course_id = ? ORDER BY sort_order'
       ).all(id);
+      // Use fallback sections when DB has none
+      if (sections.length === 0 && FALLBACK_SECTIONS[courseId]) {
+        sections = FALLBACK_SECTIONS[courseId];
+      }
       return NextResponse.json({ course, sections });
     }
   } catch {}

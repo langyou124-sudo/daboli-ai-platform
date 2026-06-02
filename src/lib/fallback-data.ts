@@ -7,7 +7,7 @@ export const FALLBACK_COURSES: Record<number, any> = {
   3: { id: 3, title: 'AI进阶：机器学习实战', description: '深入学习机器学习算法，独立完成AI项目开发。', category: 'high', grade_range: '高中1-3年级', hours: 32, price: 6800, status: 'published', sort_order: 0 },
   4: { id: 4, title: 'AI师资培训营', description: '面向在校信息技术教师的集中培训课程。', category: 'teacher', grade_range: '在职教师', hours: 24, price: 3600, status: 'published', sort_order: 0 },
   5: { id: 5, title: '暑期AI探索营地', description: '5-7天沉浸式AI体验营，动手搭建智能项目。', category: 'camp', grade_range: '小学4年级-初中', hours: 40, price: 5200, status: 'published', sort_order: 0 },
-  6: { id: 6, title: '网络工程基础', description: '系统学习网络工程核心知识，涵盖网络基础、物理层与数据链路层、网络层、传输层、应用层等10大模块，共22个课题。', category: 'high', grade_range: '高中/大学', hours: 48, price: 0, status: 'published', sort_order: 99 },
+  6: { id: 6, title: '网络工程基础', description: '系统学习网络工程核心知识，涵盖网络基础、物理层与数据链路层、网络层、传输层、应用层等10大模块，共22个课题。', category: 'network', grade_range: '高中/大学', hours: 48, price: 0, status: 'published', sort_order: 99 },
 };
 
 export const FALLBACK_SECTIONS: Record<number, any[]> = {

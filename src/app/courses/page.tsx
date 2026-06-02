@@ -8,6 +8,7 @@ const categories = [
   { key: 'primary', label: 'AI启蒙' },
   { key: 'middle', label: 'AI基础' },
   { key: 'high', label: 'AI进阶' },
+  { key: 'network', label: '网络工程' },
   { key: 'teacher', label: '师资培训' },
   { key: 'camp', label: '夏令营' },
 ];
@@ -16,6 +17,7 @@ const categoryColors: Record<string, string> = {
   primary: 'bg-green-500',
   middle: 'bg-blue-500',
   high: 'bg-purple-500',
+  network: 'bg-teal-500',
   teacher: 'bg-orange-500',
   camp: 'bg-pink-500',
 };
